@@ -23,21 +23,10 @@ nav_msgs::Path PathPlannerNode::plan(nav_msgs::OccupancyGrid const &occupancy_gr
     pcl::PointCloud<pcl::PointXYZ>::Ptr point_cloud_hull(new pcl::PointCloud<pcl::PointXYZ>);
     pcl::PointCloud<pcl::PointXYZ>::Ptr point_cloud_sliced(new pcl::PointCloud<pcl::PointXYZ>);
 
-    for (uint32_t index = 0; index < occupancy_grid.info.height * occupancy_grid.info.width; ++index) {
-        if (occupancy_grid.data[index] == 0) {
-            uint32_t const x = index % occupancy_grid.info.width;
-            uint32_t const y = index / occupancy_grid.info.width;
+    Grid::OccupancyGridToPointCloud occupancy_grid_to_point_cloud;
 
-            Eigen::Vector3d const position(static_cast<float>(x) * occupancy_grid.info.resolution, static_cast<float>(y) * occupancy_grid.info.resolution, 0.0);
-
-            Eigen::Vector3d const origin_position(occupancy_grid.info.origin.position.x, occupancy_grid.info.origin.position.y, occupancy_grid.info.origin.position.z);
-            Eigen::Quaterniond const origin_orientation(occupancy_grid.info.origin.orientation.w, occupancy_grid.info.origin.orientation.x, occupancy_grid.info.origin.orientation.y, occupancy_grid.info.origin.orientation.z);
-
-            Eigen::Vector3d const point = origin_orientation * position + origin_position;
-            
-            point_cloud->points.emplace_back(point.x(), point.y(), point.z());
-        }
-    }
+    occupancy_grid_to_point_cloud.setOccupancyGrid(occupancy_grid);
+    occupancy_grid_to_point_cloud.compute(*point_cloud);
 
     pcl::StatisticalOutlierRemoval<pcl::PointXYZ> statistical_outlier_removal;
 
@@ -93,7 +82,7 @@ std::optional<geometry_msgs::PoseStamped> PathPlannerNode::discover(nav_msgs::Oc
 
     std::tuple<uint32_t, uint32_t> cell;
 
-    Discovery::TransformToCell transform_to_cell;
+    Grid::TransformToCell transform_to_cell;
 
     transform_to_cell.setTransform(transform);
     transform_to_cell.setOccupancyGrid(occupancy_grid);
@@ -101,7 +90,7 @@ std::optional<geometry_msgs::PoseStamped> PathPlannerNode::discover(nav_msgs::Oc
 
     nav_msgs::OccupancyGrid circle_occupancy_grid;
 
-    Discovery::Circle circle;
+    Grid::Circle circle;
 
     circle.setRadius(20);
     circle.setCell(cell);

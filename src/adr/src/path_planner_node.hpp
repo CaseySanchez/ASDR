@@ -21,6 +21,7 @@
 
 #include "mandoline.hpp"
 #include "discovery.hpp"
+#include "grid.hpp"
 
 class PathPlannerNode : public ros::NodeHandle
 {
