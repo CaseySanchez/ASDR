@@ -1,0 +1,39 @@
+<launch>
+    <node pkg="serial_command_client" type="serial_command_client_node" name="serial_command_client_node_dev_ttyUSB0" output="screen">
+        <param name="path_name" type="string" value="/dev/ttyUSB0"/>
+    </node>
+    <!--node pkg="serial_command_client" type="serial_command_client_node" name="serial_command_client_node_dev_ttyUSB1" output="screen">
+        <param name="path_name" type="string" value="/dev/ttyUSB1"/>
+    </node-->
+    <!--node pkg="serial_command_client" type="serial_command_client_node" name="serial_command_client_node_dev_ttyUSB2" output="screen">
+        <param name="path_name" type="string" value="/dev/ttyUSB2"/>
+    </node-->
+    <node pkg="berry_imu" type="berry_imu_node" name="berry_imu_node" output="screen">
+        <param name="path_name" type="string" value="/dev/ttyUSB0"/>
+        <param name="imu_topic" type="string" value="/imu/data_raw"/>
+        <param name="mag_topic" type="string" value="/imu/mag"/>
+    </node>
+    <node pkg="imu_filter_madgwick" type="imu_filter_node" name="imu_filter_node">
+        <param name="use_magnetic_field_msg" type="bool" value="true"/>
+        <param name="use_mag" type="bool" value="true"/>
+        <param name="publish_tf" type="bool" value="false"/>
+        <param name="world_frame" type="string" value="enu"/>
+    </node>
+    <include file="$(find realsense2_camera)/launch/rs_camera.launch">
+        <arg name="align_depth" value="true"/>
+    </include>
+    <include file="$(find rtabmap_ros)/launch/rtabmap.launch">
+        <arg name="rtabmap_args" value="--delta_db_on_start"/>
+        <arg name="depth_topic" value="/camera/aligned_depth_to_color/image_raw"/>
+        <arg name="rgb_topic" value="/camera/color/image_raw"/>
+        <arg name="camera_info_topic" value="/camera/color/camera_info"/>
+        <arg name="approx_sync" value="false"/>
+        <arg name="wait_imu_to_init" value="true"/>
+        <arg name="imu_topic" value="/imu/data"/>
+    </include>
+    <node pkg="coverage_path_planner" type="coverage_path_planner_node" name="coverage_path_planner_node" output="screen">
+        <param name="make_plan_service" type="string" value="/core/make_plan"/>
+    </node>
+    <node pkg="core" type="core_node" name="core_node" output="screen">
+    </node>
+</launch>

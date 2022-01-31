@@ -1,0 +1,2 @@
+berry_imu:core:coverage_path_planner:serial_command_client
+-DCATKIN_DEVEL_PREFIX=/home/casey/ADR/ROS/devel -DCMAKE_INSTALL_PREFIX=/home/casey/ADR/ROS/install -G Unix Makefiles
