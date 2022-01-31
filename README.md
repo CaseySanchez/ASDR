@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # ADR
 
 # Launch RealSense
@@ -17,6 +16,3 @@ rtabmap-databaseViewer ~/.ros/rtabmap.db
 
 # Launch RTABMAP localization
 roslaunch rtabmap_ros rtabmap.launch localization:=true
-=======
-# ADR
->>>>>>> a9be09ff871650446baa9304f66cef012d341a74
