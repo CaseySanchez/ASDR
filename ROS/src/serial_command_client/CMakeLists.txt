@@ -1,5 +1,5 @@
 # %Tag(FULLTEXT)%
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.8)
 project(serial_command_client)
 
 ## Find catkin and any catkin packages
@@ -21,6 +21,7 @@ include_directories(include ${catkin_INCLUDE_DIRS})
 add_executable(serial_command_client_node src/serial_command_client_node.cpp src/serial_command_client.cpp)
 target_link_libraries(serial_command_client_node ${catkin_LIBRARIES})
 add_dependencies(serial_command_client_node serial_command_client_gencpp ${catkin_EXPORTED_TARGETS})
+set_property(TARGET serial_command_client_node PROPERTY CXX_STANDARD 17)
 
 # %EndTag(SRVCLIENT)%
 

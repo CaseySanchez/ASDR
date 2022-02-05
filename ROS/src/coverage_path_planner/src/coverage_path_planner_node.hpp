@@ -21,7 +21,7 @@ class CoveragePathPlannerNode
 {
     ros::NodeHandle m_node_handle;
     
-    ros::Subscriber m_occupancy_grid_subscriber;
+    ros::Subscriber m_point_cloud_subscriber;
 
     ros::ServiceServer m_make_plan_server;
 
@@ -30,7 +30,7 @@ class CoveragePathPlannerNode
 public:
     CoveragePathPlannerNode(ros::NodeHandle &node_handle);
 
-    void onCloudGround(sensor_msgs::PointCloud2::ConstPtr const &cloud_ground);
+    void onPointCloud(sensor_msgs::PointCloud2::ConstPtr const &point_cloud);
 
     bool onMakePlan(coverage_path_planner::make_plan::Request &request, coverage_path_planner::make_plan::Response &response);
 };

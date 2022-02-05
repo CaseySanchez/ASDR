@@ -1,5 +1,5 @@
 # %Tag(FULLTEXT)%
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.8)
 project(coverage_path_planner)
 
 ## Find catkin and any catkin packages

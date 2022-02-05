@@ -10,12 +10,12 @@ CoveragePathPlannerNode::CoveragePathPlannerNode(ros::NodeHandle &node_handle) :
 
     m_point_cloud = pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>);
 
-    m_occupancy_grid_subscriber = m_node_handle.subscribe("/rtabmap/cloud_ground", 1, &CoveragePathPlannerNode::onCloudGround, this);
+    m_point_cloud_subscriber = m_node_handle.subscribe("/rtabmap/cloud_ground", 1, &CoveragePathPlannerNode::onPointCloud, this);
 
     m_make_plan_server = m_node_handle.advertiseService(make_plan_service, &CoveragePathPlannerNode::onMakePlan, this);
 }
 
-void CoveragePathPlannerNode::onCloudGround(sensor_msgs::PointCloud2::ConstPtr const &point_cloud)
+void CoveragePathPlannerNode::onPointCloud(sensor_msgs::PointCloud2::ConstPtr const &point_cloud)
 {
     pcl::fromROSMsg(*point_cloud, *m_point_cloud);
 }
