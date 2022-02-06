@@ -22,5 +22,6 @@ public:
     SerialCommandClientNode(ros::NodeHandle const &node_handle);
     ~SerialCommandClientNode();
 
+private:
     bool onSendCommand(serial_command_client::send_command::Request &request, serial_command_client::send_command::Response &response);
 };

@@ -30,6 +30,7 @@ class CoveragePathPlannerNode
 public:
     CoveragePathPlannerNode(ros::NodeHandle &node_handle);
 
+private:
     void onPointCloud(sensor_msgs::PointCloud2::ConstPtr const &point_cloud);
 
     bool onMakePlan(coverage_path_planner::make_plan::Request &request, coverage_path_planner::make_plan::Response &response);

@@ -22,6 +22,7 @@ struct Context
 struct Idle;
 struct Manual;
 struct Automatic;
+struct Delay;
 struct Discover;
 struct Observe;
 struct Explore;
@@ -36,6 +37,7 @@ using FSM = M::PeerRoot<
                 Idle,
                 Manual,
                 M::Composite<Automatic,
+                    Delay,
                     M::Composite<Discover,
                         Observe,
                         Explore
@@ -69,6 +71,15 @@ struct Automatic : public FSM::State
     
     pid_t m_realsense_pid;
     pid_t m_rtabmap_pid;
+
+	void enter(Control &control) noexcept;
+	void update(FullControl &control) noexcept;
+    void exit(Control &control) noexcept;
+};
+
+struct Delay : public FSM::State
+{
+    ros::Time m_start;
 
 	void enter(Control &control) noexcept;
 	void update(FullControl &control) noexcept;

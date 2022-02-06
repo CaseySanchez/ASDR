@@ -27,6 +27,7 @@ public:
     RESTNode(ros::NodeHandle const &node_handle);
     ~RESTNode();
 
+private:
     void onGet(web::http::http_request const &message);
     void onPost(web::http::http_request const &message);
 };

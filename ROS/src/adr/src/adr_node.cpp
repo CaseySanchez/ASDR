@@ -39,49 +39,60 @@ bool ADRNode::onGetState(adr::get_state::Request &request, adr::get_state::Respo
         return true;
     }
     else if (m_state_machine.isActive<Automatic>()) {
-        response.state = "Automatic"; 
+        if (m_state_machine.isActive<Delay>()) {
+            response.state = "Delay"; 
 
-        return true;
-    }
-    else if (m_state_machine.isActive<Discover>()) {
-        response.state = "Discover";
+            return true;
+        }
+        else if (m_state_machine.isActive<Discover>()) {
+            if (m_state_machine.isActive<Observe>()) {
+                response.state = "Observe";
 
-        return true;
-    }
-    else if (m_state_machine.isActive<Observe>()) {
-        response.state = "Observe";
+                return true;
+            }
+            else if (m_state_machine.isActive<Explore>()) {
+                response.state = "Explore";
 
-        return true;
-    }
-    else if (m_state_machine.isActive<Explore>()) {
-        response.state = "Explore";
+                return true;
+            }
+            else {
+                response.state = "Discover";
 
-        return true;
-    }
-    else if (m_state_machine.isActive<Disinfect>()) {
-        response.state = "Disinfect";
+                return true;
+            }
+        }
+        else if (m_state_machine.isActive<Disinfect>()) {
+            if (m_state_machine.isActive<Plan>()) {
+                response.state = "Plan";
 
-        return true;
-    }
-    else if (m_state_machine.isActive<Plan>()) {
-        response.state = "Plan";
+                return true;
+            }
+            else if (m_state_machine.isActive<LightOn>()) {
+                response.state = "LightOn";
 
-        return true;
-    }
-    else if (m_state_machine.isActive<LightOn>()) {
-        response.state = "LightOn";
+                return true;
+            }
+            else if (m_state_machine.isActive<Navigate>()) {
+                response.state = "Navigate";
 
-        return true;
-    }
-    else if (m_state_machine.isActive<Navigate>()) {
-        response.state = "Navigate";
+                return true;
+            }
+            else if (m_state_machine.isActive<LightOff>()) {
+                response.state = "LightOff";
 
-        return true;
-    }
-    else if (m_state_machine.isActive<LightOff>()) {
-        response.state = "LightOff";
+                return true;
+            }
+            else {
+                response.state = "Disinfect";
 
-        return true;
+                return true;
+            }
+        }
+        else {
+            response.state = "Automatic"; 
+
+            return true;
+        }
     }
 
     return false;

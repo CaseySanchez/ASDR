@@ -75,6 +75,25 @@ void Automatic::exit(Control &control) noexcept
     //ros::Duration(5.0).sleep();
 }
 
+void Delay::enter(Control &control) noexcept 
+{
+    ROS_INFO("Delay state entered.");
+    
+    m_start = ros::Time::now();
+}
+
+void Delay::update(FullControl &control) noexcept 
+{
+    if (ros::Time::now() > m_start + ros::Duration(10.0)) {
+        control.changeTo<Discover>();
+    }
+}
+
+void Delay::exit(Control &control) noexcept
+{
+    ROS_INFO("Delay state exited.");
+}
+
 void Discover::enter(Control &control) noexcept 
 {
     ROS_INFO("Discover state entered.");
