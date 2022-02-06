@@ -1,4 +1,4 @@
-# ADR
+# Autonomous Disinfection Robot
 
 ## Dependencies
 ```
