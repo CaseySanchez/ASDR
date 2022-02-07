@@ -2,20 +2,15 @@
 
 UVCLightNode::UVCLightNode(ros::NodeHandle const &node_handle) : m_node_handle(node_handle)
 {
-    std::string path_name;
     std::string set_uvc_light_service;
-
-    if (!m_node_handle.getParam("path_name", path_name)) {
-        throw std::runtime_error("path_name not provided");
-    }
 
     if (!m_node_handle.getParam("set_uvc_light_service", set_uvc_light_service)) {
         throw std::runtime_error("set_uvc_light_service not provided");
     }
 
-    m_set_uvc_light_server = m_node_handle.advertiseService(set_uvc_light_service, &UVCLightNode::onSetUVCLight, this);
+    m_set_uvc_light_server = m_node_handle.advertiseService(ros::names::resolve(set_uvc_light_service), &UVCLightNode::onSetUVCLight, this);
 
-    m_send_command_client = m_node_handle.serviceClient<serial_command_client::send_command>(path_name + "/send_command");
+    m_send_command_client = m_node_handle.serviceClient<serial_command_client::send_command>(ros::names::resolve("send_command"));
 }
 
 bool UVCLightNode::onSetUVCLight(uvc_light::set_uvc_light::Request &request, uvc_light::set_uvc_light::Response &response)

@@ -13,8 +13,8 @@ ADRNode::ADRNode(ros::NodeHandle const &node_handle) : m_node_handle(node_handle
         throw std::runtime_error("set_state_service not provided");
     }
 
-    m_get_state_server = m_node_handle.advertiseService(get_state_service, &ADRNode::onGetState, this);
-    m_set_state_server = m_node_handle.advertiseService(set_state_service, &ADRNode::onSetState, this);
+    m_get_state_server = m_node_handle.advertiseService(ros::names::resolve(get_state_service), &ADRNode::onGetState, this);
+    m_set_state_server = m_node_handle.advertiseService(ros::names::resolve(set_state_service), &ADRNode::onSetState, this);
 }
 
 ADRNode::~ADRNode()

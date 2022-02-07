@@ -2,13 +2,8 @@
 
 BerryIMUNode::BerryIMUNode(ros::NodeHandle const &node_handle) : m_node_handle(node_handle)
 {
-    std::string path_name;
     std::string imu_topic;
     std::string mag_topic;
-
-    if (!m_node_handle.getParam("path_name", path_name)) {
-        throw std::runtime_error("path_name not provided");
-    }
 
     if (!m_node_handle.getParam("imu_topic", imu_topic)) {
         throw std::runtime_error("imu_topic not provided");
@@ -18,10 +13,10 @@ BerryIMUNode::BerryIMUNode(ros::NodeHandle const &node_handle) : m_node_handle(n
         throw std::runtime_error("mag_topic not provided");
     }
 
-    m_imu_publisher = m_node_handle.advertise<sensor_msgs::Imu>(imu_topic, 100);
-    m_magnetic_field_publisher = m_node_handle.advertise<sensor_msgs::MagneticField>(mag_topic, 100);
+    m_imu_publisher = m_node_handle.advertise<sensor_msgs::Imu>(ros::names::resolve(imu_topic), 100);
+    m_magnetic_field_publisher = m_node_handle.advertise<sensor_msgs::MagneticField>(ros::names::resolve(mag_topic), 100);
 
-    m_send_command_client = m_node_handle.serviceClient<serial_command_client::send_command>(path_name + "/send_command");
+    m_send_command_client = m_node_handle.serviceClient<serial_command_client::send_command>(ros::names::resolve("send_command"));
 }
 
 void BerryIMUNode::publish()

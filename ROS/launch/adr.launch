@@ -14,8 +14,8 @@
         </node>
         <node pkg="berry_imu" type="berry_imu_node" name="berry_imu_node" output="screen">
             <param name="path_name" type="string" value="$(arg usb_0)"/>
-            <param name="imu_topic" type="string" value="$(arg usb_0)/imu/data_raw"/>
-            <param name="mag_topic" type="string" value="$(arg usb_0)/imu/mag"/>
+            <param name="imu_topic" type="string" value="imu/data_raw"/>
+            <param name="mag_topic" type="string" value="imu/mag"/>
         </node>
         <node pkg="imu_filter_madgwick" type="imu_filter_node" name="imu_filter_node">
             <param name="use_magnetic_field_msg" type="bool" value="true"/>
@@ -25,7 +25,7 @@
         </node>
         <node pkg="uvc_light" type="uvc_light_node" name="uvc_light_node">
             <param name="path_name" type="string" value="$(arg usb_0)"/>
-            <param name="set_uvc_light_service" type="string" value="$(arg usb_0)/$(arg set_uvc_light_service)"/>
+            <param name="set_uvc_light_service" type="string" value="$(arg set_uvc_light_service)"/>
         </node>
     </group>
     <!--group ns="$(arg usb_1)">
@@ -63,8 +63,8 @@
             <param name="set_state_service" type="string" value="$(arg set_state_service)"/>
             <param name="get_state_service" type="string" value="$(arg get_state_service)"/>
         </node>
-        <!--node pkg="coverage_path_planner" type="coverage_path_planner_node" name="coverage_path_planner_node" output="screen">
+        <node pkg="coverage_path_planner" type="coverage_path_planner_node" name="coverage_path_planner_node" output="screen">
             <param name="make_plan_service" type="string" value="$(arg make_plan_service)"/>
-        </node-->
+        </node>
     </group>
 </launch>

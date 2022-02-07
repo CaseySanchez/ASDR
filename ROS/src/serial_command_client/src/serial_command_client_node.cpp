@@ -10,7 +10,7 @@ SerialCommandClientNode::SerialCommandClientNode(ros::NodeHandle const &node_han
 
     m_serial_command_client.open(path_name);
     
-    m_send_command_server = m_node_handle.advertiseService(path_name + "/send_command", &SerialCommandClientNode::onSendCommand, this);
+    m_send_command_server = m_node_handle.advertiseService(ros::names::resolve("send_command"), &SerialCommandClientNode::onSendCommand, this);
 }
 
 SerialCommandClientNode::~SerialCommandClientNode()

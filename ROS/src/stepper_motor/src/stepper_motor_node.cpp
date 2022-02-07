@@ -2,20 +2,15 @@
 
 StepperMotorNode::StepperMotorNode(ros::NodeHandle const &node_handle) : m_node_handle(node_handle)
 {
-    std::string path_name;
     std::string set_stepper_motor_service;
-
-    if (!m_node_handle.getParam("path_name", path_name)) {
-        throw std::runtime_error("path_name not provided");
-    }
 
     if (!m_node_handle.getParam("set_stepper_motor_service", set_stepper_motor_service)) {
         throw std::runtime_error("set_stepper_motor_service not provided");
     }
 
-    m_set_stepper_motor_server = m_node_handle.advertiseService(set_stepper_motor_service, &StepperMotorNode::onSetStepperMotor, this);
+    m_set_stepper_motor_server = m_node_handle.advertiseService(ros::names::resolve(set_stepper_motor_service), &StepperMotorNode::onSetStepperMotor, this);
 
-    m_send_command_client = m_node_handle.serviceClient<serial_command_client::send_command>(path_name + "/send_command");
+    m_send_command_client = m_node_handle.serviceClient<serial_command_client::send_command>(ros::names::resolve("send_command"));
 }
 
 bool StepperMotorNode::onSetStepperMotor(stepper_motor::set_stepper_motor::Request &request, stepper_motor::set_stepper_motor::Response &response)

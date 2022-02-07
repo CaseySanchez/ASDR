@@ -13,8 +13,8 @@ RESTNode::RESTNode(ros::NodeHandle const &node_handle) : m_node_handle(node_hand
         throw std::runtime_error("set_state_service not provided");
     }
     
-    m_get_state_client = m_node_handle.serviceClient<adr::get_state>(get_state_service);
-    m_set_state_client = m_node_handle.serviceClient<adr::set_state>(set_state_service);
+    m_get_state_client = m_node_handle.serviceClient<adr::get_state>(ros::names::resolve(get_state_service));
+    m_set_state_client = m_node_handle.serviceClient<adr::set_state>(ros::names::resolve(set_state_service));
 
     m_listener.support(web::http::methods::GET, std::bind(&RESTNode::onGet, this, std::placeholders::_1));
     m_listener.support(web::http::methods::POST, std::bind(&RESTNode::onPost, this, std::placeholders::_1));
