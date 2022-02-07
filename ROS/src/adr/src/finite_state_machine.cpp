@@ -1,4 +1,4 @@
-#include "state_machine.hpp"
+#include "finite_state_machine.hpp"
 
 Context::Context(ros::NodeHandle const &node_handle) : m_node_handle(node_handle)
 {
@@ -32,10 +32,8 @@ void Manual::exit(Control &control) noexcept
     ROS_INFO("Manual state exited.");
 }
 
-void Automatic::enter(Control &control) noexcept 
-{
-    ROS_INFO("Automatic state entered.");
-    
+void Automatic::entryGuard(GuardControl &control) noexcept 
+{    
     try {
         m_realsense_pid = m_ros_launch_manager.start(
             "realsense2_camera", "rs_camera.launch",
@@ -51,28 +49,36 @@ void Automatic::enter(Control &control) noexcept
     }
     catch (std::exception const &exception) {
         ROS_WARN("%s", exception.what());
-    }
 
-    //ros::Duration(5.0).sleep();
+        control.changeTo<Idle>();
+    }
+}
+
+void Automatic::enter(Control &control) noexcept
+{
+    ROS_INFO("Automatic state entered.");
 }
 
 void Automatic::update(FullControl &control) noexcept 
 {
 }
 
-void Automatic::exit(Control &control) noexcept
+void Automatic::exitGuard(GuardControl &control) noexcept
 {
-    ROS_INFO("Automatic state exited.");
-
     try {
         m_ros_launch_manager.stop(m_rtabmap_pid, SIGINT);
         m_ros_launch_manager.stop(m_realsense_pid, SIGINT);
     }
     catch (std::exception const &exception) {
         ROS_WARN("%s", exception.what());
-    }
 
-    //ros::Duration(5.0).sleep();
+        control.changeTo<Idle>();
+    }
+}
+
+void Automatic::exit(Control &control) noexcept
+{
+    ROS_INFO("Automatic state exited.");
 }
 
 void Delay::enter(Control &control) noexcept 
@@ -80,11 +86,12 @@ void Delay::enter(Control &control) noexcept
     ROS_INFO("Delay state entered.");
     
     m_start = ros::Time::now();
+    m_delay = ros::Duration(10.0);
 }
 
 void Delay::update(FullControl &control) noexcept 
 {
-    if (ros::Time::now() > m_start + ros::Duration(10.0)) {
+    if (ros::Time::now() > m_start + m_delay) {
         control.changeTo<Discover>();
     }
 }
@@ -94,15 +101,22 @@ void Delay::exit(Control &control) noexcept
     ROS_INFO("Delay state exited.");
 }
 
-void Discover::enter(Control &control) noexcept 
+void Discover::entryGuard(GuardControl &control) noexcept 
 {
-    ROS_INFO("Discover state entered.");
-
-    /*ros::ServiceClient set_mode_mapping_client = control.context().m_node_handle.serviceClient<std_srvs::Empty>("/rtabmap/set_mode_mapping");
+    m_set_mode_mapping_client = control.context().m_node_handle.serviceClient<std_srvs::Empty>("/rtabmap/set_mode_mapping");
 
     std_srvs::Empty empty_srv;
 
-    set_mode_mapping_client.call(empty_srv);*/
+    if (!m_set_mode_mapping_client.call(empty_srv)) {
+        ROS_WARN("Failed to set RTABMAP mode to mapping.");
+
+        control.changeTo<Idle>();
+    }
+}
+
+void Discover::enter(Control &control) noexcept
+{
+    ROS_INFO("Discover state entered.");
 }
 
 void Discover::update(FullControl &control) noexcept 
@@ -144,19 +158,50 @@ void Explore::exit(Control &control) noexcept
     ROS_INFO("Explore state exited.");
 }
 
-void Disinfect::enter(Control &control) noexcept 
+void Disinfect::entryGuard(GuardControl &control) noexcept 
+{
+    m_set_mode_localization_client = control.context().m_node_handle.serviceClient<std_srvs::Empty>("/rtabmap/set_mode_localization");
+    m_set_uvc_light_client = control.context().m_node_handle.serviceClient<uvc_light::set_uvc_light>("/dev/ttyUSB0/set_uvc_light");
+
+    std_srvs::Empty set_mode_localization_srv;
+
+    if (!m_set_mode_localization_client.call(set_mode_localization_srv)) {
+        ROS_WARN("Failed to set RTABMAP mode to localization.");
+
+        control.changeTo<Idle>();
+    }
+
+    uvc_light::set_uvc_light set_uvc_light_srv;
+
+    set_uvc_light_srv.request.state = true;
+
+    if (!m_set_uvc_light_client.call(set_uvc_light_srv)) {
+        ROS_WARN("Failed to turn UVC light on.");
+
+        control.changeTo<Idle>();
+    }
+}
+
+void Disinfect::enter(Control &control) noexcept
 {
     ROS_INFO("Disinfect state entered.");
-
-    /*ros::ServiceClient set_mode_localization_client = control.context().m_node_handle.serviceClient<std_srvs::Empty>("/rtabmap/set_mode_localization");
-
-    std_srvs::Empty empty_srv;
-
-    set_mode_localization_client.call(empty_srv);*/
 }
 
 void Disinfect::update(FullControl &control) noexcept 
 {
+}
+
+void Disinfect::exitGuard(GuardControl &control) noexcept
+{
+    uvc_light::set_uvc_light set_uvc_light_srv;
+
+    set_uvc_light_srv.request.state = false;
+
+    if (!m_set_uvc_light_client.call(set_uvc_light_srv)) {
+        ROS_WARN("Failed to turn UVC light off.");
+
+        control.changeTo<Idle>();
+    }
 }
 
 void Disinfect::exit(Control &control) noexcept
@@ -171,27 +216,12 @@ void Plan::enter(Control &control) noexcept
 
 void Plan::update(FullControl &control) noexcept 
 {
-    control.changeTo<LightOn>();
+    control.changeTo<Navigate>();
 }
 
 void Plan::exit(Control &control) noexcept
 {
     ROS_INFO("Plan state exited.");
-}
-
-void LightOn::enter(Control &control) noexcept 
-{
-    ROS_INFO("LightOn state entered.");
-}
-
-void LightOn::update(FullControl &control) noexcept 
-{
-    control.changeTo<Navigate>();
-}
-
-void LightOn::exit(Control &control) noexcept
-{
-    ROS_INFO("LightOn state exited.");
 }
 
 void Navigate::enter(Control &control) noexcept 
@@ -201,25 +231,10 @@ void Navigate::enter(Control &control) noexcept
 
 void Navigate::update(FullControl &control) noexcept 
 {
-    control.changeTo<LightOff>();
+    control.changeTo<Idle>();
 }
 
 void Navigate::exit(Control &control) noexcept
 {
     ROS_INFO("Navigate state exited.");
-}
-
-void LightOff::enter(Control &control) noexcept 
-{
-    ROS_INFO("LightOff state entered.");
-}
-
-void LightOff::update(FullControl &control) noexcept 
-{
-    control.changeTo<Idle>();
-}
-
-void LightOff::exit(Control &control) noexcept
-{
-    ROS_INFO("LightOff state exited.");
 }

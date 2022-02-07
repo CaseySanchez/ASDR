@@ -6,7 +6,7 @@
 #include "ros/ros.h"
 #include "ros/console.h"
 
-#include "state_machine.hpp"
+#include "finite_state_machine.hpp"
 
 #include "adr/set_state.h"
 #include "adr/get_state.h"
@@ -17,7 +17,7 @@ class ADRNode
     
 	Context m_context;
 
-	FSM::Instance m_state_machine;
+	FiniteStateMachineT::Instance m_finite_state_machine;
 
     ros::ServiceServer m_get_state_server;
     ros::ServiceServer m_set_state_server;

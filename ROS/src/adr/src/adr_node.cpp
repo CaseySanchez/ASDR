@@ -1,6 +1,6 @@
 #include "adr_node.hpp"
 
-ADRNode::ADRNode(ros::NodeHandle const &node_handle) : m_node_handle(node_handle), m_context(node_handle), m_state_machine(m_context)
+ADRNode::ADRNode(ros::NodeHandle const &node_handle) : m_node_handle(node_handle), m_context(node_handle), m_finite_state_machine(m_context)
 {
     m_get_state_server = m_node_handle.advertiseService(ros::names::resolve("get_state"), &ADRNode::onGetState, this);
     m_set_state_server = m_node_handle.advertiseService(ros::names::resolve("set_state"), &ADRNode::onSetState, this);
@@ -12,34 +12,34 @@ ADRNode::~ADRNode()
 
 void ADRNode::update()
 {
-    m_state_machine.update();
+    m_finite_state_machine.update();
 }
 
 bool ADRNode::onGetState(adr::get_state::Request &request, adr::get_state::Response &response)
 {
-    if (m_state_machine.isActive<Idle>()) {
+    if (m_finite_state_machine.isActive<Idle>()) {
         response.state = "Idle";
 
         return true;
     }
-    else if (m_state_machine.isActive<Manual>()) {
+    else if (m_finite_state_machine.isActive<Manual>()) {
         response.state = "Manual";
 
         return true;
     }
-    else if (m_state_machine.isActive<Automatic>()) {
-        if (m_state_machine.isActive<Delay>()) {
+    else if (m_finite_state_machine.isActive<Automatic>()) {
+        if (m_finite_state_machine.isActive<Delay>()) {
             response.state = "Delay"; 
 
             return true;
         }
-        else if (m_state_machine.isActive<Discover>()) {
-            if (m_state_machine.isActive<Observe>()) {
+        else if (m_finite_state_machine.isActive<Discover>()) {
+            if (m_finite_state_machine.isActive<Observe>()) {
                 response.state = "Observe";
 
                 return true;
             }
-            else if (m_state_machine.isActive<Explore>()) {
+            else if (m_finite_state_machine.isActive<Explore>()) {
                 response.state = "Explore";
 
                 return true;
@@ -50,24 +50,14 @@ bool ADRNode::onGetState(adr::get_state::Request &request, adr::get_state::Respo
                 return true;
             }
         }
-        else if (m_state_machine.isActive<Disinfect>()) {
-            if (m_state_machine.isActive<Plan>()) {
+        else if (m_finite_state_machine.isActive<Disinfect>()) {
+            if (m_finite_state_machine.isActive<Plan>()) {
                 response.state = "Plan";
 
                 return true;
             }
-            else if (m_state_machine.isActive<LightOn>()) {
-                response.state = "LightOn";
-
-                return true;
-            }
-            else if (m_state_machine.isActive<Navigate>()) {
+            else if (m_finite_state_machine.isActive<Navigate>()) {
                 response.state = "Navigate";
-
-                return true;
-            }
-            else if (m_state_machine.isActive<LightOff>()) {
-                response.state = "LightOff";
 
                 return true;
             }
@@ -90,17 +80,17 @@ bool ADRNode::onGetState(adr::get_state::Request &request, adr::get_state::Respo
 bool ADRNode::onSetState(adr::set_state::Request &request, adr::set_state::Response &response)
 {
     if (request.state == "Idle") {
-        m_state_machine.changeTo<Idle>();
+        m_finite_state_machine.changeTo<Idle>();
 
         return true;
     }
     else if (request.state == "Manual") {
-        m_state_machine.changeTo<Manual>();
+        m_finite_state_machine.changeTo<Manual>();
 
         return true;
     }
     else if (request.state == "Automatic") {
-        m_state_machine.changeTo<Automatic>();
+        m_finite_state_machine.changeTo<Automatic>();
 
         return true;
     }

@@ -7,6 +7,7 @@
 #include "ros/console.h"
 
 #include "std_srvs/Empty.h"
+#include "uvc_light/set_uvc_light.h"
 
 #include "ros_launch_manager.hpp"
 
@@ -28,114 +29,107 @@ struct Observe;
 struct Explore;
 struct Disinfect;
 struct Plan;
-struct LightOn;
 struct Navigate;
-struct LightOff;
 
-using M = hfsm2::MachineT<hfsm2::Config::ContextT<Context>>;
-using FSM = M::PeerRoot<
+using MachineT = hfsm2::MachineT<hfsm2::Config::ContextT<Context>>;
+using FiniteStateMachineT = MachineT::PeerRoot<
                 Idle,
                 Manual,
-                M::Composite<Automatic,
+                MachineT::Composite<Automatic,
                     Delay,
-                    M::Composite<Discover,
+                    MachineT::Composite<Discover,
                         Observe,
                         Explore
                     >,
-                    M::Composite<Disinfect,
+                    MachineT::Composite<Disinfect,
                         Plan,
-                        LightOn,
-                        Navigate,
-                        LightOff
+                        Navigate
                     >
                 >
             >;
 
-struct Idle : public FSM::State 
+struct Idle : public FiniteStateMachineT::State 
 {
 	void enter(Control &control) noexcept;
 	void update(FullControl &control) noexcept;
     void exit(Control &control) noexcept;
 };
 
-struct Manual : public FSM::State
+struct Manual : public FiniteStateMachineT::State
 {
 	void enter(Control &control) noexcept;
 	void update(FullControl &control) noexcept;
     void exit(Control &control) noexcept;
 };
 
-struct Automatic : public FSM::State
+struct Automatic : public FiniteStateMachineT::State
 {
     ROSLaunchManager m_ros_launch_manager;
 
     pid_t m_realsense_pid;
     pid_t m_rtabmap_pid;
 
-	void enter(Control &control) noexcept;
+	void entryGuard(GuardControl &control) noexcept;
+    void enter(Control &control) noexcept;
 	void update(FullControl &control) noexcept;
+    void exitGuard(GuardControl &control) noexcept;
     void exit(Control &control) noexcept;
 };
 
-struct Delay : public FSM::State
+struct Delay : public FiniteStateMachineT::State
 {
     ros::Time m_start;
+    ros::Duration m_delay;
 
 	void enter(Control &control) noexcept;
 	void update(FullControl &control) noexcept;
     void exit(Control &control) noexcept;
 };
 
-struct Discover : public FSM::State
+struct Discover : public FiniteStateMachineT::State
+{
+    ros::ServiceClient m_set_mode_mapping_client;
+
+	void entryGuard(GuardControl &control) noexcept;
+    void enter(Control &control) noexcept;
+	void update(FullControl &control) noexcept;
+    void exit(Control &control) noexcept;
+};
+
+struct Observe : public FiniteStateMachineT::State
 {
 	void enter(Control &control) noexcept;
 	void update(FullControl &control) noexcept;
     void exit(Control &control) noexcept;
 };
 
-struct Observe : public FSM::State
+struct Explore : public FiniteStateMachineT::State
 {
 	void enter(Control &control) noexcept;
 	void update(FullControl &control) noexcept;
     void exit(Control &control) noexcept;
 };
 
-struct Explore : public FSM::State
+struct Disinfect : public FiniteStateMachineT::State
+{
+    ros::ServiceClient m_set_mode_localization_client;
+    ros::ServiceClient m_set_uvc_light_client;
+
+	void entryGuard(GuardControl &control) noexcept;
+    void enter(Control &control) noexcept;
+	void update(FullControl &control) noexcept;
+    void exitGuard(GuardControl &control) noexcept;
+    void exit(Control &control) noexcept;
+};
+
+struct Plan : public FiniteStateMachineT::State
 {
 	void enter(Control &control) noexcept;
 	void update(FullControl &control) noexcept;
     void exit(Control &control) noexcept;
 };
 
-struct Disinfect : public FSM::State
-{
-	void enter(Control &control) noexcept;
-	void update(FullControl &control) noexcept;
-    void exit(Control &control) noexcept;
-};
-
-struct Plan : public FSM::State
-{
-	void enter(Control &control) noexcept;
-	void update(FullControl &control) noexcept;
-    void exit(Control &control) noexcept;
-};
-
-struct LightOn : public FSM::State
-{
-	void enter(Control &control) noexcept;
-	void update(FullControl &control) noexcept;
-    void exit(Control &control) noexcept;
-};
-
-struct Navigate : public FSM::State
-{
-	void enter(Control &control) noexcept;
-	void update(FullControl &control) noexcept;
-    void exit(Control &control) noexcept;
-};
-
-struct LightOff : public FSM::State
+struct Navigate : public FiniteStateMachineT::State
 {
 	void enter(Control &control) noexcept;
 	void update(FullControl &control) noexcept;
