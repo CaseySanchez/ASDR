@@ -2,69 +2,36 @@
     <arg name="usb_0" default="/dev/ttyUSB0"/>
     <arg name="usb_1" default="/dev/ttyUSB1"/>
     <arg name="usb_2" default="/dev/ttyUSB2"/>
-    <arg name="set_uvc_light_service" default="set_uvc_light"/>
-    <arg name="set_stepper_motor_service" default="set_stepper_motor"/>
-    <arg name="get_rotary_encoder_service" default="get_rotary_encoder"/>
-    <arg name="set_state_service" default="set_state"/>
-    <arg name="get_state_service" default="get_state"/>
-    <arg name="make_plan_service" default="make_plan"/>
     <group ns="$(arg usb_0)">
         <node pkg="serial_command_client" type="serial_command_client_node" name="serial_command_client_node" output="screen">
             <param name="path_name" type="string" value="$(arg usb_0)"/>
         </node>
-        <node pkg="berry_imu" type="berry_imu_node" name="berry_imu_node" output="screen">
-            <param name="path_name" type="string" value="$(arg usb_0)"/>
-            <param name="imu_topic" type="string" value="imu/data_raw"/>
-            <param name="mag_topic" type="string" value="imu/mag"/>
-        </node>
+        <node pkg="berry_imu" type="berry_imu_node" name="berry_imu_node" output="screen"/>
         <node pkg="imu_filter_madgwick" type="imu_filter_node" name="imu_filter_node">
             <param name="use_magnetic_field_msg" type="bool" value="true"/>
             <param name="use_mag" type="bool" value="true"/>
             <param name="publish_tf" type="bool" value="false"/>
             <param name="world_frame" type="string" value="enu"/>
         </node>
-        <node pkg="uvc_light" type="uvc_light_node" name="uvc_light_node">
-            <param name="path_name" type="string" value="$(arg usb_0)"/>
-            <param name="set_uvc_light_service" type="string" value="$(arg set_uvc_light_service)"/>
-        </node>
+        <node pkg="uvc_light" type="uvc_light_node" name="uvc_light_node"/>
     </group>
     <!--group ns="$(arg usb_1)">
         <node pkg="serial_command_client" type="serial_command_client_node" name="serial_command_client_node" output="screen">
             <param name="path_name" type="string" value="$(arg usb_1)"/>
         </node>
-        <node pkg="rotary_encoder" type="rotary_encoder_node" name="rotary_encoder_node" output="screen">
-            <param name="path_name" type="string" value="$(arg usb_1)"/>
-            <param name="get_rotary_encoder_service" type="string" value="$(arg usb_1)/$(arg get_rotary_encoder_service)"/>
-        </node>
-        <node pkg="stepper_motor" type="stepper_motor_node" name="stepper_motor_node" output="screen">
-            <param name="path_name" type="string" value="$(arg usb_1)"/>
-            <param name="set_stepper_motor_service" type="string" value="$(arg usb_1)/$(arg set_stepper_motor_service)"/>
-        </node>
+        <node pkg="rotary_encoder" type="rotary_encoder_node" name="rotary_encoder_node" output="screen"/>
+        <node pkg="stepper_motor" type="stepper_motor_node" name="stepper_motor_node" output="screen"/>
     </group>
     <group ns="$(arg usb_2)">
         <node pkg="serial_command_client" type="serial_command_client_node" name="serial_command_client_node" output="screen">
             <param name="path_name" type="string" value="$(arg usb_2)"/>
         </node>
-        <node pkg="rotary_encoder" type="rotary_encoder_node" name="rotary_encoder_node" output="screen">
-            <param name="path_name" type="string" value="$(arg usb_2)"/>
-            <param name="get_rotary_encoder_service" type="string" value="$(arg usb_2)/$(arg get_rotary_encoder_service)"/>
-        </node>
-        <node pkg="stepper_motor" type="stepper_motor_node" name="stepper_motor_node" output="screen">
-            <param name="path_name" type="string" value="$(arg usb_2)"/>
-            <param name="set_stepper_motor_service" type="string" value="$(arg usb_2)/$(arg set_stepper_motor_service)"/>
-        </node>
+        <node pkg="rotary_encoder" type="rotary_encoder_node" name="rotary_encoder_node" output="screen"/>
+        <node pkg="stepper_motor" type="stepper_motor_node" name="stepper_motor_node" output="screen"/>
     </group-->
     <group ns="adr">
-        <node pkg="adr" type="adr_node" name="adr_node" output="screen">
-            <param name="set_state_service" type="string" value="$(arg set_state_service)"/>
-            <param name="get_state_service" type="string" value="$(arg get_state_service)"/>
-        </node>
-        <node pkg="rest" type="rest_node" name="rest_node" output="screen">
-            <param name="set_state_service" type="string" value="$(arg set_state_service)"/>
-            <param name="get_state_service" type="string" value="$(arg get_state_service)"/>
-        </node>
-        <node pkg="coverage_path_planner" type="coverage_path_planner_node" name="coverage_path_planner_node" output="screen">
-            <param name="make_plan_service" type="string" value="$(arg make_plan_service)"/>
-        </node>
+        <node pkg="adr" type="adr_node" name="adr_node" output="screen"/>
+        <node pkg="rest" type="rest_node" name="rest_node" output="screen"/>
+        <node pkg="coverage_path_planner" type="coverage_path_planner_node" name="coverage_path_planner_node" output="screen"/>
     </group>
 </launch>

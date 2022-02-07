@@ -2,17 +2,11 @@
 
 CoveragePathPlannerNode::CoveragePathPlannerNode(ros::NodeHandle &node_handle) : m_node_handle(node_handle)
 {
-    std::string make_plan_service;
-
-    if (!m_node_handle.getParam("make_plan_service", make_plan_service)) {
-        throw std::runtime_error("make_plan_service not provided");
-    }
-
     m_point_cloud = pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>);
 
     m_point_cloud_subscriber = m_node_handle.subscribe(ros::names::resolve("rtabmap/cloud_ground"), 1, &CoveragePathPlannerNode::onPointCloud, this);
 
-    m_make_plan_server = m_node_handle.advertiseService(ros::names::resolve(make_plan_service), &CoveragePathPlannerNode::onMakePlan, this);
+    m_make_plan_server = m_node_handle.advertiseService(ros::names::resolve("make_plan"), &CoveragePathPlannerNode::onMakePlan, this);
 }
 
 void CoveragePathPlannerNode::onPointCloud(sensor_msgs::PointCloud2::ConstPtr const &point_cloud)

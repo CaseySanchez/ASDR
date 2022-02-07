@@ -2,13 +2,7 @@
 
 UVCLightNode::UVCLightNode(ros::NodeHandle const &node_handle) : m_node_handle(node_handle)
 {
-    std::string set_uvc_light_service;
-
-    if (!m_node_handle.getParam("set_uvc_light_service", set_uvc_light_service)) {
-        throw std::runtime_error("set_uvc_light_service not provided");
-    }
-
-    m_set_uvc_light_server = m_node_handle.advertiseService(ros::names::resolve(set_uvc_light_service), &UVCLightNode::onSetUVCLight, this);
+    m_set_uvc_light_server = m_node_handle.advertiseService(ros::names::resolve("set_uvc_light"), &UVCLightNode::onSetUVCLight, this);
 
     m_send_command_client = m_node_handle.serviceClient<serial_command_client::send_command>(ros::names::resolve("send_command"));
 }

@@ -1,20 +1,9 @@
 #include "rest_node.hpp"
 
 RESTNode::RESTNode(ros::NodeHandle const &node_handle) : m_node_handle(node_handle), m_listener("http://0.0.0.0:8080")
-{
-    std::string get_state_service;
-    std::string set_state_service;
-
-    if (!m_node_handle.getParam("get_state_service", get_state_service)) {
-        throw std::runtime_error("get_state_service not provided");
-    }
-
-    if (!m_node_handle.getParam("set_state_service", set_state_service)) {
-        throw std::runtime_error("set_state_service not provided");
-    }
-    
-    m_get_state_client = m_node_handle.serviceClient<adr::get_state>(ros::names::resolve(get_state_service));
-    m_set_state_client = m_node_handle.serviceClient<adr::set_state>(ros::names::resolve(set_state_service));
+{   
+    m_get_state_client = m_node_handle.serviceClient<adr::get_state>(ros::names::resolve("get_state"));
+    m_set_state_client = m_node_handle.serviceClient<adr::set_state>(ros::names::resolve("set_state"));
 
     m_listener.support(web::http::methods::GET, std::bind(&RESTNode::onGet, this, std::placeholders::_1));
     m_listener.support(web::http::methods::POST, std::bind(&RESTNode::onPost, this, std::placeholders::_1));

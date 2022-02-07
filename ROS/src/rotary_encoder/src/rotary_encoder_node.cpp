@@ -2,13 +2,7 @@
 
 RotaryEncoderNode::RotaryEncoderNode(ros::NodeHandle const &node_handle) : m_node_handle(node_handle)
 {
-    std::string get_rotary_encoder_service;
-
-    if (!m_node_handle.getParam("get_rotary_encoder_service", get_rotary_encoder_service)) {
-        throw std::runtime_error("get_rotary_encoder_service not provided");
-    }
-
-    m_get_rotary_encoder_server = m_node_handle.advertiseService(ros::names::resolve(get_rotary_encoder_service), &RotaryEncoderNode::onGetRotaryEncoder, this);
+    m_get_rotary_encoder_server = m_node_handle.advertiseService(ros::names::resolve("get_rotary_encoder"), &RotaryEncoderNode::onGetRotaryEncoder, this);
 
     m_send_command_client = m_node_handle.serviceClient<serial_command_client::send_command>(ros::names::resolve("send_command"));
 }
