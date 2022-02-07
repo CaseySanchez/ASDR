@@ -48,8 +48,8 @@ using FSM = M::PeerRoot<
                         Navigate,
                         LightOff
                     >
-				>
-			>;
+                >
+            >;
 
 struct Idle : public FSM::State 
 {
@@ -68,7 +68,7 @@ struct Manual : public FSM::State
 struct Automatic : public FSM::State
 {
     ROSLaunchManager m_ros_launch_manager;
-    
+
     pid_t m_realsense_pid;
     pid_t m_rtabmap_pid;
 
@@ -137,8 +137,6 @@ struct Navigate : public FSM::State
 
 struct LightOff : public FSM::State
 {
-    ros::Time start;
-
 	void enter(Control &control) noexcept;
 	void update(FullControl &control) noexcept;
     void exit(Control &control) noexcept;

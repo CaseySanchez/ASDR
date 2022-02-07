@@ -212,15 +212,11 @@ void Navigate::exit(Control &control) noexcept
 void LightOff::enter(Control &control) noexcept 
 {
     ROS_INFO("LightOff state entered.");
-
-    start = ros::Time::now();
 }
 
 void LightOff::update(FullControl &control) noexcept 
 {
-    if (ros::Time::now() > start + ros::Duration(10.0)) {
-        control.changeTo<Idle>();
-    }
+    control.changeTo<Idle>();
 }
 
 void LightOff::exit(Control &control) noexcept

@@ -26,7 +26,7 @@ bool StepperMotorNode::onSetStepperMotor(stepper_motor::set_stepper_motor::Reque
 
     send_command_srv.request.buffer.resize(sizeof(uint32_t) + sizeof(uint32_t) + sizeof(int32_t));
 
-    std::memcpy(&send_command_srv.request.buffer[0], &request.stepper_id, sizeof(uint32_t));
+    std::memcpy(&send_command_srv.request.buffer[0], &request.stepper_motor_id, sizeof(uint32_t));
     std::memcpy(&send_command_srv.request.buffer[sizeof(uint32_t)], &request.speed, sizeof(uint32_t));
     std::memcpy(&send_command_srv.request.buffer[sizeof(uint32_t) + sizeof(uint32_t)], &request.step, sizeof(int32_t));
 

@@ -2,17 +2,19 @@
     <arg name="usb_0" default="/dev/ttyUSB0"/>
     <arg name="usb_1" default="/dev/ttyUSB1"/>
     <arg name="usb_2" default="/dev/ttyUSB2"/>
-    <arg name="set_state_service" default="/adr/set_state"/>
-    <arg name="get_state_service" default="/adr/get_state"/>
-    <arg name="make_plan_service" default="/adr/make_plan"/>
+    <arg name="set_stepper_motor_service" default="set_stepper_motor"/>
+    <arg name="get_rotary_encoder_service" default="get_rotary_encoder"/>
+    <arg name="set_state_service" default="set_state"/>
+    <arg name="get_state_service" default="get_state"/>
+    <arg name="make_plan_service" default="make_plan"/>
     <group ns="hardware">
-        <!--node pkg="serial_command_client" type="serial_command_client_node" name="serial_command_client_node_0" output="screen">
+        <!--node pkg="serial_command_client" type="serial_command_client_node" name="serial_command_client_node_usb_0" output="screen">
             <param name="path_name" type="string" value="$(arg usb_0)"/>
         </node-->
-        <!--node pkg="serial_command_client" type="serial_command_client_node" name="serial_command_client_node_1" output="screen">
+        <!--node pkg="serial_command_client" type="serial_command_client_node" name="serial_command_client_node_usb_1" output="screen">
             <param name="path_name" type="string" value="$(arg usb_1)"/>
         </node-->
-        <!--node pkg="serial_command_client" type="serial_command_client_node" name="serial_command_client_node_2" output="screen">
+        <!--node pkg="serial_command_client" type="serial_command_client_node" name="serial_command_client_node_usb_2" output="screen">
             <param name="path_name" type="string" value="$(arg usb_2)"/>
         </node-->
         <!--node pkg="berry_imu" type="berry_imu_node" name="berry_imu_node" output="screen">
@@ -25,6 +27,22 @@
             <param name="use_mag" type="bool" value="true"/>
             <param name="publish_tf" type="bool" value="false"/>
             <param name="world_frame" type="string" value="enu"/>
+        </node-->
+        <!--node pkg="rotary_encoder" type="rotary_encoder_node" name="rotary_encoder_node_usb_1" output="screen">
+            <param name="path_name" type="string" value="$(arg usb_1)"/>
+            <param name="get_rotary_encoder_service" type="string" value="$(arg usb_1)/$(arg get_rotary_encoder_service)"/>
+        </node-->
+        <!--node pkg="stepper_motor" type="stepper_motor_node" name="stepper_motor_node_usb_1" output="screen">
+            <param name="path_name" type="string" value="$(arg usb_1)"/>
+            <param name="set_stepper_motor_service" type="string" value="$(arg usb_1)/$(arg set_stepper_motor_service)"/>
+        </node-->
+        <!--node pkg="rotary_encoder" type="rotary_encoder_node" name="rotary_encoder_node_usb_2" output="screen">
+            <param name="path_name" type="string" value="$(arg usb_2)"/>
+            <param name="get_rotary_encoder_service" type="string" value="$(arg usb_2)/$(arg get_rotary_encoder_service)"/>
+        </node-->
+        <!--node pkg="stepper_motor" type="stepper_motor_node" name="stepper_motor_node_usb_2" output="screen">
+            <param name="path_name" type="string" value="$(arg usb_2)"/>
+            <param name="set_stepper_motor_service" type="string" value="$(arg usb_2)/$(arg set_stepper_motor_service)"/>
         </node-->
     </group>
     <group ns="adr">
