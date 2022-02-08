@@ -17,7 +17,7 @@ class ADRNode
     
 	Context m_context;
 
-	FiniteStateMachineT::Instance m_finite_state_machine;
+	FiniteStateMachine::Instance m_finite_state_machine;
 
     ros::ServiceServer m_get_state_server;
     ros::ServiceServer m_set_state_server;

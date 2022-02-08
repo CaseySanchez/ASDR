@@ -2,12 +2,17 @@
 
 #include <stdexcept>
 #include <memory>
+#include <vector>
 
 #include "ros/ros.h"
 #include "ros/console.h"
 
+#include "actionlib/client/simple_action_client.h"
+#include "move_base_msgs/MoveBaseAction.h"
+
 #include "std_srvs/Empty.h"
 #include "uvc_light/set_uvc_light.h"
+#include "coverage_path_planner/make_plan.h"
 
 #include "ros_launch_manager.hpp"
 
@@ -28,41 +33,36 @@ struct Discover;
 struct Observe;
 struct Explore;
 struct Disinfect;
-struct Plan;
-struct Navigate;
 
-using MachineT = hfsm2::MachineT<hfsm2::Config::ContextT<Context>>;
-using FiniteStateMachineT = MachineT::PeerRoot<
+using Machine = hfsm2::MachineT<hfsm2::Config::ContextT<Context>>;
+using FiniteStateMachine = Machine::PeerRoot<
                 Idle,
                 Manual,
-                MachineT::Composite<Automatic,
+                Machine::Composite<Automatic,
                     Delay,
-                    MachineT::Composite<Discover,
+                    Machine::Composite<Discover,
                         Observe,
                         Explore
                     >,
-                    MachineT::Composite<Disinfect,
-                        Plan,
-                        Navigate
-                    >
+                    Disinfect
                 >
             >;
 
-struct Idle : public FiniteStateMachineT::State 
+struct Idle : public FiniteStateMachine::State 
 {
 	void enter(Control &control) noexcept;
 	void update(FullControl &control) noexcept;
     void exit(Control &control) noexcept;
 };
 
-struct Manual : public FiniteStateMachineT::State
+struct Manual : public FiniteStateMachine::State
 {
 	void enter(Control &control) noexcept;
 	void update(FullControl &control) noexcept;
     void exit(Control &control) noexcept;
 };
 
-struct Automatic : public FiniteStateMachineT::State
+struct Automatic : public FiniteStateMachine::State
 {
     ROSLaunchManager m_ros_launch_manager;
 
@@ -76,7 +76,7 @@ struct Automatic : public FiniteStateMachineT::State
     void exit(Control &control) noexcept;
 };
 
-struct Delay : public FiniteStateMachineT::State
+struct Delay : public FiniteStateMachine::State
 {
     ros::Time m_start;
     ros::Duration m_delay;
@@ -86,7 +86,7 @@ struct Delay : public FiniteStateMachineT::State
     void exit(Control &control) noexcept;
 };
 
-struct Discover : public FiniteStateMachineT::State
+struct Discover : public FiniteStateMachine::State
 {
     ros::ServiceClient m_set_mode_mapping_client;
 
@@ -96,42 +96,35 @@ struct Discover : public FiniteStateMachineT::State
     void exit(Control &control) noexcept;
 };
 
-struct Observe : public FiniteStateMachineT::State
+struct Observe : public FiniteStateMachine::State
 {
 	void enter(Control &control) noexcept;
 	void update(FullControl &control) noexcept;
     void exit(Control &control) noexcept;
 };
 
-struct Explore : public FiniteStateMachineT::State
+struct Explore : public FiniteStateMachine::State
 {
 	void enter(Control &control) noexcept;
 	void update(FullControl &control) noexcept;
     void exit(Control &control) noexcept;
 };
 
-struct Disinfect : public FiniteStateMachineT::State
+struct Disinfect : public FiniteStateMachine::State
 {
     ros::ServiceClient m_set_mode_localization_client;
     ros::ServiceClient m_set_uvc_light_client;
+    ros::ServiceClient m_make_plan_client;
+
+    std::unique_ptr<actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction>> m_move_base_client;
+
+    std::vector<geometry_msgs::Pose> m_plan;
+
+    std::size_t m_plan_index;
 
 	void entryGuard(GuardControl &control) noexcept;
     void enter(Control &control) noexcept;
 	void update(FullControl &control) noexcept;
     void exitGuard(GuardControl &control) noexcept;
-    void exit(Control &control) noexcept;
-};
-
-struct Plan : public FiniteStateMachineT::State
-{
-	void enter(Control &control) noexcept;
-	void update(FullControl &control) noexcept;
-    void exit(Control &control) noexcept;
-};
-
-struct Navigate : public FiniteStateMachineT::State
-{
-	void enter(Control &control) noexcept;
-	void update(FullControl &control) noexcept;
     void exit(Control &control) noexcept;
 };

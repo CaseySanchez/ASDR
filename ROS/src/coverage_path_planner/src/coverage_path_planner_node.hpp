@@ -10,8 +10,7 @@
 #include "ros/console.h"
 
 #include "sensor_msgs/PointCloud2.h"
-#include "nav_msgs/Path.h"
-#include "geometry_msgs/PoseStamped.h"
+#include "geometry_msgs/Pose.h"
 
 #include "coverage_path_planner/make_plan.h"
 
@@ -26,6 +25,9 @@ class CoveragePathPlannerNode
     ros::ServiceServer m_make_plan_server;
 
     pcl::PointCloud<pcl::PointXYZ>::Ptr m_point_cloud;
+
+    float m_extrude_distance;
+    float m_slice_spacing;
 
 public:
     CoveragePathPlannerNode(ros::NodeHandle &node_handle);

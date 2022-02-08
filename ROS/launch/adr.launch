@@ -32,6 +32,9 @@
     <group ns="adr">
         <node pkg="adr" type="adr_node" name="adr_node" output="screen"/>
         <node pkg="rest" type="rest_node" name="rest_node" output="screen"/>
-        <node pkg="coverage_path_planner" type="coverage_path_planner_node" name="coverage_path_planner_node" output="screen"/>
+        <node pkg="coverage_path_planner" type="coverage_path_planner_node" name="coverage_path_planner_node" output="screen">
+            <param name="extrude_distance" type="double" value="-0.5"/>
+            <param name="slice_spacing" type="double" value="0.25"/>
+        </node>
     </group>
 </launch>

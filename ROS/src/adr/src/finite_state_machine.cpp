@@ -162,21 +162,43 @@ void Disinfect::entryGuard(GuardControl &control) noexcept
 {
     m_set_mode_localization_client = control.context().m_node_handle.serviceClient<std_srvs::Empty>("/rtabmap/set_mode_localization");
     m_set_uvc_light_client = control.context().m_node_handle.serviceClient<uvc_light::set_uvc_light>("/dev/ttyUSB0/set_uvc_light");
+    m_make_plan_client = control.context().m_node_handle.serviceClient<uvc_light::set_uvc_light>("/adr/make_plan");
 
     std_srvs::Empty set_mode_localization_srv;
 
-    if (!m_set_mode_localization_client.call(set_mode_localization_srv)) {
-        ROS_WARN("Failed to set RTABMAP mode to localization.");
+    if (m_set_mode_localization_client.call(set_mode_localization_srv)) {
+        uvc_light::set_uvc_light set_uvc_light_srv;
 
-        control.changeTo<Idle>();
+        set_uvc_light_srv.request.state = true;
+
+        if (m_set_uvc_light_client.call(set_uvc_light_srv)) {
+            coverage_path_planner::make_plan make_plan_srv;
+
+            if (m_make_plan_client.call(make_plan_srv)) {
+                m_plan = make_plan_srv.response.plan;
+
+                m_move_base_client = std::make_unique<actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction>>("move_base", true);
+
+                if (!m_move_base_client->waitForServer(ros::Duration(10.0))) {
+                    ROS_WARN("Failed to load move_base action client.");
+
+                    control.changeTo<Idle>();
+                }
+            }
+            else {
+                ROS_WARN("Failed to make a plan.");
+
+                control.changeTo<Idle>();
+            }
+        }
+        else {
+            ROS_WARN("Failed to turn UVC light on.");
+
+            control.changeTo<Idle>();
+        }
     }
-
-    uvc_light::set_uvc_light set_uvc_light_srv;
-
-    set_uvc_light_srv.request.state = true;
-
-    if (!m_set_uvc_light_client.call(set_uvc_light_srv)) {
-        ROS_WARN("Failed to turn UVC light on.");
+    else {
+        ROS_WARN("Failed to set RTABMAP mode to localization.");
 
         control.changeTo<Idle>();
     }
@@ -185,10 +207,43 @@ void Disinfect::entryGuard(GuardControl &control) noexcept
 void Disinfect::enter(Control &control) noexcept
 {
     ROS_INFO("Disinfect state entered.");
+
+    m_plan_index = 0;
+
+    move_base_msgs::MoveBaseGoal goal;
+
+    goal.target_pose.header.frame_id = "base_link";
+    goal.target_pose.header.stamp = ros::Time::now();
+
+    goal.target_pose.pose = m_plan[m_plan_index];
+
+    m_move_base_client->sendGoal(goal);
 }
 
 void Disinfect::update(FullControl &control) noexcept 
 {
+    if(m_move_base_client->getState() == actionlib::SimpleClientGoalState::SUCCEEDED) {
+        m_plan_index++;
+
+        if (m_plan_index >= m_plan.size()) {
+            control.changeTo<Idle>();
+        }
+        else {
+            move_base_msgs::MoveBaseGoal goal;
+
+            goal.target_pose.header.frame_id = "base_link";
+            goal.target_pose.header.stamp = ros::Time::now();
+
+            goal.target_pose.pose = m_plan[m_plan_index];
+
+            m_move_base_client->sendGoal(goal);
+        }
+    }
+    else if (m_move_base_client->getState() == actionlib::SimpleClientGoalState::ABORTED) {
+        ROS_WARN("move_base navigation aborted.");
+
+        control.changeTo<Idle>();
+    }
 }
 
 void Disinfect::exitGuard(GuardControl &control) noexcept
@@ -207,34 +262,4 @@ void Disinfect::exitGuard(GuardControl &control) noexcept
 void Disinfect::exit(Control &control) noexcept
 {
     ROS_INFO("Disinfect state exited.");
-}
-
-void Plan::enter(Control &control) noexcept 
-{
-    ROS_INFO("Plan state entered.");
-}
-
-void Plan::update(FullControl &control) noexcept 
-{
-    control.changeTo<Navigate>();
-}
-
-void Plan::exit(Control &control) noexcept
-{
-    ROS_INFO("Plan state exited.");
-}
-
-void Navigate::enter(Control &control) noexcept 
-{
-    ROS_INFO("Navigate state entered.");
-}
-
-void Navigate::update(FullControl &control) noexcept 
-{
-    control.changeTo<Idle>();
-}
-
-void Navigate::exit(Control &control) noexcept
-{
-    ROS_INFO("Navigate state exited.");
 }

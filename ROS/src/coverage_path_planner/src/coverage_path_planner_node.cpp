@@ -2,6 +2,14 @@
 
 CoveragePathPlannerNode::CoveragePathPlannerNode(ros::NodeHandle &node_handle) : m_node_handle(node_handle)
 {
+    if (!m_node_handle.getParam("extrude_distance", m_extrude_distance)) {
+        throw std::runtime_error("extrude_distance not provided");
+    }
+
+    if (!m_node_handle.getParam("slice_spacing", m_slice_spacing)) {
+        throw std::runtime_error("slice_spacing not provided");
+    }
+
     m_point_cloud = pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>);
 
     m_point_cloud_subscriber = m_node_handle.subscribe(ros::names::resolve("rtabmap/cloud_ground"), 1, &CoveragePathPlannerNode::onPointCloud, this);
@@ -38,39 +46,29 @@ bool CoveragePathPlannerNode::onMakePlan(coverage_path_planner::make_plan::Reque
         Mandoline::Extrude extrude;
 
         extrude.setInputCloud(point_cloud_hull);
-        extrude.setDistance(-0.5f);
+        extrude.setDistance(m_extrude_distance);
         extrude.compute(*point_cloud_extruded);
 
         Mandoline::Slice slice;
 
         slice.setInputCloud(point_cloud_extruded);
-        slice.setSpacing(0.25f);
+        slice.setSpacing(m_slice_spacing);
         slice.compute(*point_cloud_sliced);
 
-        nav_msgs::Path plan;
-
-        plan.header.stamp = ros::Time::now();
-        plan.header.frame_id = "map";
-
         for (size_t index = 0; index < point_cloud_sliced->points.size(); ++index) {
-            geometry_msgs::PoseStamped pose_stamped;
+            geometry_msgs::Pose pose;
 
-            pose_stamped.header.stamp = ros::Time::now();
-            pose_stamped.header.frame_id = "map";
+            pose.position.x = point_cloud_sliced->points[index].x;
+            pose.position.y = point_cloud_sliced->points[index].y;
+            pose.position.z = 0.0f;
 
-            pose_stamped.pose.position.x = point_cloud_sliced->points[index].x;
-            pose_stamped.pose.position.y = point_cloud_sliced->points[index].y;
-            pose_stamped.pose.position.z = 0.0f;
+            pose.orientation.x = 0.0f;
+            pose.orientation.y = 0.0f;
+            pose.orientation.z = 0.0f;
+            pose.orientation.w = 1.0f;
 
-            pose_stamped.pose.orientation.x = 0.0f;
-            pose_stamped.pose.orientation.y = 0.0f;
-            pose_stamped.pose.orientation.z = 0.0f;
-            pose_stamped.pose.orientation.w = 1.0f;
-
-            plan.poses.push_back(pose_stamped);
+            response.plan.push_back(pose);
         }
-
-        response.plan = plan;
 
         return true;
     }
