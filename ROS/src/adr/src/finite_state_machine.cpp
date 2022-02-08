@@ -179,7 +179,14 @@ void Disinfect::entryGuard(GuardControl &control) noexcept
 
                 m_move_base_client = std::make_unique<actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction>>("move_base", true);
 
-                if (!m_move_base_client->waitForServer(ros::Duration(10.0))) {
+                if (m_move_base_client->waitForServer(ros::Duration(10.0))) {
+                    if (!sendNextGoal(true)) {
+                        ROS_WARN("Plan is empty.");
+
+                        control.changeTo<Idle>();
+                    }
+                }
+                else {
                     ROS_WARN("Failed to load move_base action client.");
 
                     control.changeTo<Idle>();
@@ -207,40 +214,17 @@ void Disinfect::entryGuard(GuardControl &control) noexcept
 void Disinfect::enter(Control &control) noexcept
 {
     ROS_INFO("Disinfect state entered.");
-
-    m_plan_index = 0;
-
-    move_base_msgs::MoveBaseGoal goal;
-
-    goal.target_pose.header.frame_id = "base_link";
-    goal.target_pose.header.stamp = ros::Time::now();
-
-    goal.target_pose.pose = m_plan[m_plan_index];
-
-    m_move_base_client->sendGoal(goal);
 }
 
 void Disinfect::update(FullControl &control) noexcept 
 {
     if(m_move_base_client->getState() == actionlib::SimpleClientGoalState::SUCCEEDED) {
-        m_plan_index++;
-
-        if (m_plan_index >= m_plan.size()) {
+        if (!sendNextGoal(false)) {
             control.changeTo<Idle>();
-        }
-        else {
-            move_base_msgs::MoveBaseGoal goal;
-
-            goal.target_pose.header.frame_id = "base_link";
-            goal.target_pose.header.stamp = ros::Time::now();
-
-            goal.target_pose.pose = m_plan[m_plan_index];
-
-            m_move_base_client->sendGoal(goal);
         }
     }
     else if (m_move_base_client->getState() == actionlib::SimpleClientGoalState::ABORTED) {
-        ROS_WARN("move_base navigation aborted.");
+        ROS_WARN("Navigation aborted.");
 
         control.changeTo<Idle>();
     }
@@ -262,4 +246,32 @@ void Disinfect::exitGuard(GuardControl &control) noexcept
 void Disinfect::exit(Control &control) noexcept
 {
     ROS_INFO("Disinfect state exited.");
+}
+
+bool Disinfect::sendNextGoal(bool const initial)
+{
+    if (initial) {
+        m_plan_iterator = std::cbegin(m_plan);
+    }
+    else {
+        m_plan_iterator = std::next(m_plan_iterator);
+    }
+
+    if (m_plan_iterator == std::cend(m_plan)) {
+        return false;
+    }
+    else {
+        ROS_INFO("Navigating to waypoint %zu of %zu.", std::distance(std::cbegin(m_plan), m_plan_iterator) + 1, std::size(m_plan));
+
+        move_base_msgs::MoveBaseGoal goal;
+
+        goal.target_pose.header.frame_id = "base_link";
+        goal.target_pose.header.stamp = ros::Time::now();
+
+        goal.target_pose.pose = *m_plan_iterator;
+
+        m_move_base_client->sendGoal(goal);
+
+        return true;
+    }
 }

@@ -120,11 +120,14 @@ struct Disinfect : public FiniteStateMachine::State
 
     std::vector<geometry_msgs::Pose> m_plan;
 
-    std::size_t m_plan_index;
+    std::vector<geometry_msgs::Pose>::const_iterator m_plan_iterator;
 
 	void entryGuard(GuardControl &control) noexcept;
     void enter(Control &control) noexcept;
 	void update(FullControl &control) noexcept;
     void exitGuard(GuardControl &control) noexcept;
     void exit(Control &control) noexcept;
+
+private:
+    bool sendNextGoal(bool const initial);
 };
