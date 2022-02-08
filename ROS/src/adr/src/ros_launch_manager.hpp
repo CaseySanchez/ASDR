@@ -15,7 +15,6 @@
 
 #include "ros/ros.h"
 #include "ros/console.h"
-#include "rospack/rospack.h"
 
 class ROSLaunchManager 
 {
@@ -51,10 +50,10 @@ public:
 	template<typename... Args>
 	pid_t start(Args... args) 
 	{
-		std::vector<std::string> args_vector = { args... };
+		std::vector<std::string> const args_vector = { args... };
 
-		if (args_vector.size() > 0) {
-			pid_t pid = ::fork();
+		if (std::size(args_vector) > 0) {
+			pid_t const pid = ::fork();
 
 			if (pid == 0) {
 				::setsid();
@@ -70,7 +69,7 @@ public:
 			else {
 				std::scoped_lock<std::mutex> scoped_lock(m_mutex);
 
-				std::string args_string = std::accumulate(std::next(std::begin(args_vector)), std::end(args_vector), args_vector[0], [](std::string lhs, std::string rhs) -> std::string { return lhs + " " + rhs; });
+				std::string const args_string = std::accumulate(std::next(std::cbegin(args_vector)), std::cend(args_vector), args_vector[0], [](std::string const &lhs, std::string const &rhs) -> std::string { return lhs + " " + rhs; });
 
 				ROS_INFO("Starting \"roslaunch %s\" with PID %d", args_string.c_str(), pid);
 
@@ -88,9 +87,9 @@ public:
 	{
 		std::scoped_lock<std::mutex> scoped_lock(m_mutex);
 
-		auto pid_it = std::find(std::begin(m_pids), std::end(m_pids), pid);
+		std::vector<pid_t>::const_iterator pid_it = std::find(std::cbegin(m_pids), std::cend(m_pids), pid);
 
-		if (pid_it != m_pids.end()) {
+		if (pid_it != std::cend(m_pids)) {
 			::kill(pid, signal);
 
 			ROS_INFO("Stopping process with PID %d and signal %d", pid, signal);
@@ -106,7 +105,7 @@ private:
 		while (m_running.load()) {
 			std::scoped_lock<std::mutex> scoped_lock(m_mutex);
 
-			for (auto pid_it = std::begin(m_pids); pid_it != std::end(m_pids); ++pid_it) {
+			for (std::vector<pid_t>::iterator pid_it = std::begin(m_pids); pid_it != std::end(m_pids); ++pid_it) {
 				pid_t const pid = *pid_it;
 
 				int32_t status;

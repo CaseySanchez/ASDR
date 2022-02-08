@@ -18,7 +18,7 @@ bool RotaryEncoderNode::onGetRotaryEncoder(rotary_encoder::get_rotary_encoder::R
     std::memcpy(&send_command_srv.request.buffer[0], &request.rotary_encoder_id, sizeof(uint32_t));
 
     if (m_send_command_client.call(send_command_srv)) {
-        if (send_command_srv.response.status == 0 && send_command_srv.response.buffer.size() == sizeof(int32_t) + sizeof(int32_t)) {
+        if (send_command_srv.response.status == 0 && std::size(send_command_srv.response.buffer) == sizeof(int32_t) + sizeof(int32_t)) {
             std::memcpy(&response.position, &send_command_srv.response.buffer[0], sizeof(int32_t));
             std::memcpy(&response.direction, &send_command_srv.response.buffer[sizeof(int32_t)], sizeof(int32_t));
 

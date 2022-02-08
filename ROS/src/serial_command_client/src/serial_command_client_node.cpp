@@ -24,9 +24,9 @@ bool SerialCommandClientNode::onSendCommand(serial_command_client::send_command:
 
     serial_command_request.command = request.command;
 
-    serial_command_request.size = request.buffer.size();
+    serial_command_request.size = std::size(request.buffer);
 
-    std::memcpy(&serial_command_request.buffer[0], request.buffer.data(), request.buffer.size());
+    std::memcpy(&serial_command_request.buffer[0], &request.buffer[0], std::size(request.buffer));
 
     SerialCommandResponse serial_command_response;
 
@@ -36,7 +36,7 @@ bool SerialCommandClientNode::onSendCommand(serial_command_client::send_command:
 
     response.buffer.resize(serial_command_response.size);
     
-    std::memcpy(response.buffer.data(), &serial_command_response.buffer[0], serial_command_response.size);
+    std::memcpy(&response.buffer[0], &serial_command_response.buffer[0], serial_command_response.size);
 
     return true;
 }

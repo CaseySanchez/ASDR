@@ -15,19 +15,19 @@ void Mandoline::Extrude::compute(pcl::PointCloud<pcl::PointXYZ> &output)
     auto const &points = m_point_cloud->points;
 
     {
-        pcl::PointXYZ const point = extrude({ points[points.size() - 1], points[0], points[1] });
+        pcl::PointXYZ const point = extrude({ points[std::size(points) - 1], points[0], points[1] });
 
         output.points.push_back(point);
     }
 
-    for (size_t index = 0; index < points.size() - 2; ++index) {
+    for (size_t index = 0; index < std::size(points) - 2; ++index) {
         pcl::PointXYZ const point = extrude({ points[index + 0], points[index + 1], points[index + 2] });
 
         output.points.push_back(point);
     }
 
     {
-        pcl::PointXYZ const point = extrude({ points[points.size() - 2], points[points.size() - 1], points[0] });
+        pcl::PointXYZ const point = extrude({ points[std::size(points) - 2], points[std::size(points) - 1], points[0] });
 
         output.points.push_back(point);
     }
@@ -100,11 +100,11 @@ void Mandoline::Slice::compute(pcl::PointCloud<pcl::PointXYZ> &output)
     // Intersect each spaced vertical line with each of the graph's edges,
     // only add the intersection to the point list if it falls within constraints of the line segment
     for (float x = min[0]; x <= max[0]; x += m_spacing) {
-        size_t const back_index = output_points.size();
+        size_t const back_index = std::size(output_points);
 
         Eigen::Hyperplane<float, 2> const cast_line = Eigen::Hyperplane<float, 2>::Through({ x, min[1] }, { x, max[1] });
 
-        for (size_t index = 0; index < input_points.size() - 1; ++index) {
+        for (size_t index = 0; index < std::size(input_points) - 1; ++index) {
             std::array<Eigen::Vector2f, 2> const segment = { input_points[index], input_points[index + 1] };
 
             Eigen::Hyperplane<float, 2> const edge_line = Eigen::Hyperplane<float, 2>::Through(segment[0], segment[1]);
@@ -117,7 +117,7 @@ void Mandoline::Slice::compute(pcl::PointCloud<pcl::PointXYZ> &output)
         }
 
         {
-            std::array<Eigen::Vector2f, 2> const segment = { input_points[input_points.size() - 1], input_points[0] };
+            std::array<Eigen::Vector2f, 2> const segment = { input_points[std::size(input_points) - 1], input_points[0] };
 
             Eigen::Hyperplane<float, 2> const edge_line = Eigen::Hyperplane<float, 2>::Through(segment[0], segment[1]);
 

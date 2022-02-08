@@ -172,14 +172,14 @@ void Disinfect::entryGuard(GuardControl &control) noexcept
         set_uvc_light_srv.request.state = true;
 
         if (m_set_uvc_light_client.call(set_uvc_light_srv)) {
-            coverage_path_planner::make_plan make_plan_srv;
+            m_move_base_client = std::make_unique<actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction>>("move_base", true);
 
-            if (m_make_plan_client.call(make_plan_srv)) {
-                m_plan = make_plan_srv.response.plan;
+            if (m_move_base_client->waitForServer(ros::Duration(10.0))) {
+                coverage_path_planner::make_plan make_plan_srv;
 
-                m_move_base_client = std::make_unique<actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction>>("move_base", true);
+                if (m_make_plan_client.call(make_plan_srv)) {
+                    m_plan = make_plan_srv.response.plan;
 
-                if (m_move_base_client->waitForServer(ros::Duration(10.0))) {
                     if (!sendNextGoal(true)) {
                         ROS_WARN("Plan is empty.");
 
@@ -187,13 +187,13 @@ void Disinfect::entryGuard(GuardControl &control) noexcept
                     }
                 }
                 else {
-                    ROS_WARN("Failed to load move_base action client.");
+                    ROS_WARN("Failed to make a plan.");
 
                     control.changeTo<Idle>();
                 }
             }
             else {
-                ROS_WARN("Failed to make a plan.");
+                ROS_WARN("Failed to load move_base action client.");
 
                 control.changeTo<Idle>();
             }
