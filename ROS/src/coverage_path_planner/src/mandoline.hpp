@@ -1,11 +1,11 @@
 #pragma once
 
+#include <numeric>
+
 #include <pcl-1.10/pcl/io/pcd_io.h>
 #include <pcl-1.10/pcl/point_types.h>
 
 #include "geometry_msgs/Pose.h"
-
-#include <numeric>
 
 namespace Mandoline
 {

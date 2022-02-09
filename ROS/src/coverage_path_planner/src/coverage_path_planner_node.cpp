@@ -10,29 +10,46 @@ CoveragePathPlannerNode::CoveragePathPlannerNode(ros::NodeHandle &node_handle) :
         throw std::runtime_error("slice_spacing not provided");
     }
 
-    m_point_cloud = pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>);
-
-    m_point_cloud_subscriber = m_node_handle.subscribe(ros::names::resolve("rtabmap/cloud_ground"), 1, &CoveragePathPlannerNode::onPointCloud, this);
+    m_occupancy_grid_subscriber = m_node_handle.subscribe(ros::names::resolve("/rtabmap/grid_map"), 1, &CoveragePathPlannerNode::onOccupancyGrid, this);
 
     m_make_plan_server = m_node_handle.advertiseService(ros::names::resolve("make_plan"), &CoveragePathPlannerNode::onMakePlan, this);
 }
 
-void CoveragePathPlannerNode::onPointCloud(sensor_msgs::PointCloud2::ConstPtr const &point_cloud)
+void CoveragePathPlannerNode::onOccupancyGrid(nav_msgs::OccupancyGrid::ConstPtr const &occupancy_grid)
 {
-    pcl::fromROSMsg(*point_cloud, *m_point_cloud);
+    m_occupancy_grid = *occupancy_grid;
 }
 
 bool CoveragePathPlannerNode::onMakePlan(coverage_path_planner::make_plan::Request &request, coverage_path_planner::make_plan::Response &response)
 {
-    if (!m_point_cloud->empty()) {
+    if (m_occupancy_grid.has_value()) {
+        nav_msgs::OccupancyGrid const occupancy_grid = m_occupancy_grid.value();
+
+        pcl::PointCloud<pcl::PointXYZ>::Ptr point_cloud(new pcl::PointCloud<pcl::PointXYZ>);
         pcl::PointCloud<pcl::PointXYZ>::Ptr point_cloud_filtered(new pcl::PointCloud<pcl::PointXYZ>);
         pcl::PointCloud<pcl::PointXYZ>::Ptr point_cloud_hull(new pcl::PointCloud<pcl::PointXYZ>);
         pcl::PointCloud<pcl::PointXYZ>::Ptr point_cloud_extruded(new pcl::PointCloud<pcl::PointXYZ>);
         pcl::PointCloud<pcl::PointXYZ>::Ptr point_cloud_sliced(new pcl::PointCloud<pcl::PointXYZ>);
 
+        for (uint32_t index = 0; index < occupancy_grid.info.height * occupancy_grid.info.width; ++index) {
+            if (occupancy_grid.data[index] == 0) {
+                uint32_t const x = index % occupancy_grid.info.width;
+                uint32_t const y = index / occupancy_grid.info.width;
+
+                Eigen::Vector3d const position(static_cast<float>(x) * occupancy_grid.info.resolution, static_cast<float>(y) * occupancy_grid.info.resolution, 0.0);
+
+                Eigen::Vector3d const origin_position(occupancy_grid.info.origin.position.x, occupancy_grid.info.origin.position.y, occupancy_grid.info.origin.position.z);
+                Eigen::Quaterniond const origin_orientation(occupancy_grid.info.origin.orientation.w, occupancy_grid.info.origin.orientation.x, occupancy_grid.info.origin.orientation.y, occupancy_grid.info.origin.orientation.z);
+
+                Eigen::Vector3d const point = origin_orientation * position + origin_position;
+                
+                point_cloud->points.emplace_back(point.x(), point.y(), point.z());
+            }
+        }
+        
         pcl::StatisticalOutlierRemoval<pcl::PointXYZ> statistical_outlier_removal;
 
-        statistical_outlier_removal.setInputCloud(m_point_cloud);
+        statistical_outlier_removal.setInputCloud(point_cloud);
         statistical_outlier_removal.setMeanK(1000);
         statistical_outlier_removal.setStddevMulThresh(0.01);
         statistical_outlier_removal.filter(*point_cloud_filtered);
@@ -55,7 +72,7 @@ bool CoveragePathPlannerNode::onMakePlan(coverage_path_planner::make_plan::Reque
         slice.setSpacing(m_slice_spacing);
         slice.compute(*point_cloud_sliced);
 
-        for (size_t index = 0; index < point_cloud_sliced->points.size(); ++index) {
+        for (size_t index = 0; index < std::size(point_cloud_sliced->points); ++index) {
             geometry_msgs::Pose pose;
 
             pose.position.x = point_cloud_sliced->points[index].x;

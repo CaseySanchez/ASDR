@@ -1,7 +1,10 @@
 #include "finite_state_machine.hpp"
 
-Context::Context(ros::NodeHandle const &node_handle) : m_node_handle(node_handle)
+Context::Context(ros::NodeHandle const &node_handle) : m_node_handle(node_handle), m_move_base_client(new actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction>("move_base", true))
 {
+    if (!m_move_base_client->waitForServer(ros::Duration(10.0))) {
+        throw std::runtime_error("Failed to load move_base action client.");
+    }
 }
 
 void Idle::enter(Control &control) noexcept 
@@ -48,7 +51,7 @@ void Automatic::entryGuard(GuardControl &control) noexcept
             "approx_sync:=false");
     }
     catch (std::exception const &exception) {
-        ROS_WARN("%s", exception.what());
+        ROS_ERROR("%s", exception.what());
 
         control.changeTo<Idle>();
     }
@@ -70,7 +73,7 @@ void Automatic::exitGuard(GuardControl &control) noexcept
         m_ros_launch_manager.stop(m_realsense_pid, SIGINT);
     }
     catch (std::exception const &exception) {
-        ROS_WARN("%s", exception.what());
+        ROS_ERROR("%s", exception.what());
 
         control.changeTo<Idle>();
     }
@@ -92,7 +95,7 @@ void Delay::enter(Control &control) noexcept
 void Delay::update(FullControl &control) noexcept 
 {
     if (ros::Time::now() > m_start + m_delay) {
-        control.changeTo<Discover>();
+        control.changeTo<Map>();
     }
 }
 
@@ -101,31 +104,36 @@ void Delay::exit(Control &control) noexcept
     ROS_INFO("Delay state exited.");
 }
 
-void Discover::entryGuard(GuardControl &control) noexcept 
+void Map::entryGuard(GuardControl &control) noexcept 
 {
-    m_set_mode_mapping_client = control.context().m_node_handle.serviceClient<std_srvs::Empty>("/rtabmap/set_mode_mapping");
+    try {
+        m_set_mode_mapping_client = control.context().m_node_handle.serviceClient<std_srvs::Empty>("/rtabmap/set_mode_mapping");
 
-    std_srvs::Empty empty_srv;
+        std_srvs::Empty empty_srv;
 
-    if (!m_set_mode_mapping_client.call(empty_srv)) {
-        ROS_WARN("Failed to set RTABMAP mode to mapping.");
+        if (!m_set_mode_mapping_client.call(empty_srv)) {
+            throw std::runtime_error("Failed to set RTABMAP mode to mapping.");
+        }
+    }
+    catch (std::exception const &exception) {
+        ROS_ERROR("%s", exception.what());
 
         control.changeTo<Idle>();
     }
 }
 
-void Discover::enter(Control &control) noexcept
+void Map::enter(Control &control) noexcept
 {
-    ROS_INFO("Discover state entered.");
+    ROS_INFO("Map state entered.");
 }
 
-void Discover::update(FullControl &control) noexcept 
+void Map::update(FullControl &control) noexcept 
 {
 }
 
-void Discover::exit(Control &control) noexcept
+void Map::exit(Control &control) noexcept
 {
-    ROS_INFO("Discover state exited.");
+    ROS_INFO("Map state exited.");
 }
 
 void Observe::enter(Control &control) noexcept 
@@ -143,6 +151,36 @@ void Observe::exit(Control &control) noexcept
     ROS_INFO("Observe state exited.");
 }
 
+void Explore::entryGuard(GuardControl &control) noexcept 
+{
+    try {
+        m_discover_client = control.context().m_node_handle.serviceClient<discovery::discover>("/adr/discover");
+
+        discovery::discover discover_srv;
+
+        if (!m_discover_client.call(discover_srv)) {
+            throw std::runtime_error("Failed to discover.");
+        }
+        else {
+            if (discover_srv.response.status == 1) {
+                move_base_msgs::MoveBaseGoal goal;
+
+                goal.target_pose = discover_srv.response.pose_stamped;
+
+                control.context().m_move_base_client->sendGoal(goal);
+            }
+            else {
+                control.changeTo<Disinfect>();
+            }
+        }
+    }
+    catch (std::exception const &exception) {
+        ROS_ERROR("%s", exception.what());
+
+        control.changeTo<Idle>();
+    }
+}
+
 void Explore::enter(Control &control) noexcept 
 {
     ROS_INFO("Explore state entered.");
@@ -150,7 +188,19 @@ void Explore::enter(Control &control) noexcept
 
 void Explore::update(FullControl &control) noexcept 
 {
-    control.changeTo<Disinfect>();
+    try {
+        if(control.context().m_move_base_client->getState() == actionlib::SimpleClientGoalState::SUCCEEDED) {
+            control.changeTo<Observe>();
+        }
+        else if (control.context().m_move_base_client->getState() == actionlib::SimpleClientGoalState::ABORTED) {
+            throw std::runtime_error("Navigation aborted.");
+        }
+    }
+    catch (std::exception const &exception) {
+        ROS_ERROR("%s", exception.what());
+
+        control.changeTo<Idle>();
+    }
 }
 
 void Explore::exit(Control &control) noexcept
@@ -160,52 +210,54 @@ void Explore::exit(Control &control) noexcept
 
 void Disinfect::entryGuard(GuardControl &control) noexcept 
 {
-    m_set_mode_localization_client = control.context().m_node_handle.serviceClient<std_srvs::Empty>("/rtabmap/set_mode_localization");
-    m_set_uvc_light_client = control.context().m_node_handle.serviceClient<uvc_light::set_uvc_light>("/dev/ttyUSB0/set_uvc_light");
-    m_make_plan_client = control.context().m_node_handle.serviceClient<uvc_light::set_uvc_light>("/adr/make_plan");
+    try {
+        m_set_mode_localization_client = control.context().m_node_handle.serviceClient<std_srvs::Empty>("/rtabmap/set_mode_localization");
+        m_set_uvc_light_client = control.context().m_node_handle.serviceClient<uvc_light::set_uvc_light>("/dev/ttyUSB0/set_uvc_light");
+        m_make_plan_client = control.context().m_node_handle.serviceClient<coverage_path_planner::make_plan>("/adr/make_plan");
 
-    std_srvs::Empty set_mode_localization_srv;
+        std_srvs::Empty set_mode_localization_srv;
 
-    if (m_set_mode_localization_client.call(set_mode_localization_srv)) {
+        if (!m_set_mode_localization_client.call(set_mode_localization_srv)) {
+            throw std::runtime_error("Failed to set RTABMAP mode to localization.");
+        }
+
         uvc_light::set_uvc_light set_uvc_light_srv;
 
         set_uvc_light_srv.request.state = true;
 
-        if (m_set_uvc_light_client.call(set_uvc_light_srv)) {
-            m_move_base_client = std::make_unique<actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction>>("move_base", true);
+        if (!m_set_uvc_light_client.call(set_uvc_light_srv)) {
+            throw std::runtime_error("Failed to turn UVC light on.");
+        }
 
-            if (m_move_base_client->waitForServer(ros::Duration(10.0))) {
-                coverage_path_planner::make_plan make_plan_srv;
+        coverage_path_planner::make_plan make_plan_srv;
 
-                if (m_make_plan_client.call(make_plan_srv)) {
-                    m_plan = make_plan_srv.response.plan;
-
-                    if (!sendNextGoal(true)) {
-                        ROS_WARN("Plan is empty.");
-
-                        control.changeTo<Idle>();
-                    }
-                }
-                else {
-                    ROS_WARN("Failed to make a plan.");
-
-                    control.changeTo<Idle>();
-                }
-            }
-            else {
-                ROS_WARN("Failed to load move_base action client.");
-
-                control.changeTo<Idle>();
-            }
+        if (!m_make_plan_client.call(make_plan_srv)) {
+            throw std::runtime_error("Failed to make a plan.");
         }
         else {
-            ROS_WARN("Failed to turn UVC light on.");
+            m_plan = make_plan_srv.response.plan;
 
-            control.changeTo<Idle>();
+            m_plan_iterator = std::cbegin(m_plan);
+
+            if (m_plan_iterator == std::cend(m_plan)) {
+                throw std::runtime_error("Plan is empty.");
+            }
+            else {
+                ROS_INFO("Navigating to waypoint %zu of %zu.", std::distance(std::cbegin(m_plan), m_plan_iterator) + 1, std::size(m_plan));
+
+                move_base_msgs::MoveBaseGoal goal;
+
+                goal.target_pose.header.frame_id = "base_link";
+                goal.target_pose.header.stamp = ros::Time::now();
+
+                goal.target_pose.pose = *m_plan_iterator;
+
+                control.context().m_move_base_client->sendGoal(goal);
+            }
         }
     }
-    else {
-        ROS_WARN("Failed to set RTABMAP mode to localization.");
+    catch (std::exception const &exception) {
+        ROS_ERROR("%s", exception.what());
 
         control.changeTo<Idle>();
     }
@@ -218,13 +270,32 @@ void Disinfect::enter(Control &control) noexcept
 
 void Disinfect::update(FullControl &control) noexcept 
 {
-    if(m_move_base_client->getState() == actionlib::SimpleClientGoalState::SUCCEEDED) {
-        if (!sendNextGoal(false)) {
-            control.changeTo<Idle>();
+    try {
+        if(control.context().m_move_base_client->getState() == actionlib::SimpleClientGoalState::SUCCEEDED) {
+            m_plan_iterator = std::next(m_plan_iterator);
+
+            if (m_plan_iterator == std::cend(m_plan)) {
+                control.changeTo<Idle>();
+            }
+            else {
+                ROS_INFO("Navigating to waypoint %zu of %zu.", std::distance(std::cbegin(m_plan), m_plan_iterator) + 1, std::size(m_plan));
+
+                move_base_msgs::MoveBaseGoal goal;
+
+                goal.target_pose.header.frame_id = "base_link";
+                goal.target_pose.header.stamp = ros::Time::now();
+
+                goal.target_pose.pose = *m_plan_iterator;
+
+                control.context().m_move_base_client->sendGoal(goal);
+            }
+        }
+        else if (control.context().m_move_base_client->getState() == actionlib::SimpleClientGoalState::ABORTED) {
+            throw std::runtime_error("Navigation aborted.");
         }
     }
-    else if (m_move_base_client->getState() == actionlib::SimpleClientGoalState::ABORTED) {
-        ROS_WARN("Navigation aborted.");
+    catch (std::exception const &exception) {
+        ROS_ERROR("%s", exception.what());
 
         control.changeTo<Idle>();
     }
@@ -232,12 +303,17 @@ void Disinfect::update(FullControl &control) noexcept
 
 void Disinfect::exitGuard(GuardControl &control) noexcept
 {
-    uvc_light::set_uvc_light set_uvc_light_srv;
+    try {
+        uvc_light::set_uvc_light set_uvc_light_srv;
 
-    set_uvc_light_srv.request.state = false;
+        set_uvc_light_srv.request.state = false;
 
-    if (!m_set_uvc_light_client.call(set_uvc_light_srv)) {
-        ROS_WARN("Failed to turn UVC light off.");
+        if (!m_set_uvc_light_client.call(set_uvc_light_srv)) {
+            throw std::runtime_error("Failed to turn UVC light off.");
+        }
+    }
+    catch (std::exception const &exception) {
+        ROS_ERROR("%s", exception.what());
 
         control.changeTo<Idle>();
     }
@@ -246,32 +322,4 @@ void Disinfect::exitGuard(GuardControl &control) noexcept
 void Disinfect::exit(Control &control) noexcept
 {
     ROS_INFO("Disinfect state exited.");
-}
-
-bool Disinfect::sendNextGoal(bool const initial)
-{
-    if (initial) {
-        m_plan_iterator = std::cbegin(m_plan);
-    }
-    else {
-        m_plan_iterator = std::next(m_plan_iterator);
-    }
-
-    if (m_plan_iterator == std::cend(m_plan)) {
-        return false;
-    }
-    else {
-        ROS_INFO("Navigating to waypoint %zu of %zu.", std::distance(std::cbegin(m_plan), m_plan_iterator) + 1, std::size(m_plan));
-
-        move_base_msgs::MoveBaseGoal goal;
-
-        goal.target_pose.header.frame_id = "base_link";
-        goal.target_pose.header.stamp = ros::Time::now();
-
-        goal.target_pose.pose = *m_plan_iterator;
-
-        m_move_base_client->sendGoal(goal);
-
-        return true;
-    }
 }

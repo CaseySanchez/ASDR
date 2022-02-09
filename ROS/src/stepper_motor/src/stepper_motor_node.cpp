@@ -20,7 +20,7 @@ bool StepperMotorNode::onSetStepperMotor(stepper_motor::set_stepper_motor::Reque
     std::memcpy(&send_command_srv.request.buffer[sizeof(uint32_t) + sizeof(uint32_t)], &request.step, sizeof(int32_t));
 
     if (m_send_command_client.call(send_command_srv)) {
-        if (send_command_srv.response.status == 0) {
+        if (send_command_srv.response.status == 1) {
             return true;
         }
     }

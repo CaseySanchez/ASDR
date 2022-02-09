@@ -13,6 +13,7 @@
 #include "std_srvs/Empty.h"
 #include "uvc_light/set_uvc_light.h"
 #include "coverage_path_planner/make_plan.h"
+#include "discovery/discover.h"
 
 #include "ros_launch_manager.hpp"
 
@@ -23,13 +24,15 @@ struct Context
     Context(ros::NodeHandle const &node_handle);
 
     ros::NodeHandle m_node_handle;
+
+    std::shared_ptr<actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction>> m_move_base_client;
 };
 
 struct Idle;
 struct Manual;
 struct Automatic;
 struct Delay;
-struct Discover;
+struct Map;
 struct Observe;
 struct Explore;
 struct Disinfect;
@@ -40,7 +43,7 @@ using FiniteStateMachine = Machine::PeerRoot<
                 Manual,
                 Machine::Composite<Automatic,
                     Delay,
-                    Machine::Composite<Discover,
+                    Machine::Composite<Map,
                         Observe,
                         Explore
                     >,
@@ -86,7 +89,7 @@ struct Delay : public FiniteStateMachine::State
     void exit(Control &control) noexcept;
 };
 
-struct Discover : public FiniteStateMachine::State
+struct Map : public FiniteStateMachine::State
 {
     ros::ServiceClient m_set_mode_mapping_client;
 
@@ -105,6 +108,9 @@ struct Observe : public FiniteStateMachine::State
 
 struct Explore : public FiniteStateMachine::State
 {
+    ros::ServiceClient m_discover_client;
+    
+	void entryGuard(GuardControl &control) noexcept;
 	void enter(Control &control) noexcept;
 	void update(FullControl &control) noexcept;
     void exit(Control &control) noexcept;
@@ -116,8 +122,6 @@ struct Disinfect : public FiniteStateMachine::State
     ros::ServiceClient m_set_uvc_light_client;
     ros::ServiceClient m_make_plan_client;
 
-    std::unique_ptr<actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction>> m_move_base_client;
-
     std::vector<geometry_msgs::Pose> m_plan;
 
     std::vector<geometry_msgs::Pose>::const_iterator m_plan_iterator;
@@ -127,7 +131,4 @@ struct Disinfect : public FiniteStateMachine::State
 	void update(FullControl &control) noexcept;
     void exitGuard(GuardControl &control) noexcept;
     void exit(Control &control) noexcept;
-
-private:
-    bool sendNextGoal(bool const initial);
 };

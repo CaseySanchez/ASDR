@@ -85,7 +85,7 @@ void Mandoline::Slice::compute(pcl::PointCloud<pcl::PointXYZ> &output)
     max[0] = -std::numeric_limits<float>::infinity();
     max[1] = -std::numeric_limits<float>::infinity();
 
-    for (auto const &input_point : m_point_cloud->points) {
+    for (pcl::PointXYZ const &input_point : m_point_cloud->points) {
         min[0] = std::min(min[0], input_point.x);
         min[1] = std::min(min[1], input_point.y);
         
@@ -139,7 +139,7 @@ void Mandoline::Slice::compute(pcl::PointCloud<pcl::PointXYZ> &output)
         flip = !flip;
     }
 
-    for (auto const &output_point : output_points) {
+    for (Eigen::Vector2f const &output_point : output_points) {
         output.points.emplace_back(output_point.x(), output_point.y(), 0.0f);
     }
 }

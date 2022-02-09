@@ -33,7 +33,7 @@ bool ADRNode::onGetState(adr::get_state::Request &request, adr::get_state::Respo
 
             return true;
         }
-        else if (m_finite_state_machine.isActive<Discover>()) {
+        else if (m_finite_state_machine.isActive<Map>()) {
             if (m_finite_state_machine.isActive<Observe>()) {
                 response.state = "Observe";
 
@@ -45,7 +45,7 @@ bool ADRNode::onGetState(adr::get_state::Request &request, adr::get_state::Respo
                 return true;
             }
             else {
-                response.state = "Discover";
+                response.state = "Map";
 
                 return true;
             }

@@ -15,7 +15,7 @@ void BerryIMUNode::publish()
     send_command_srv.request.command = 0;
 
     if (m_send_command_client.call(send_command_srv)) {
-        if (send_command_srv.response.status == 0 && std::size(send_command_srv.response.buffer) == sizeof(float) * 3 * 3) {
+        if (send_command_srv.response.status == 1 && std::size(send_command_srv.response.buffer) == sizeof(float) * 3 * 3) {
             float gyr[3];
             float acc[3];
             float mag[3];
