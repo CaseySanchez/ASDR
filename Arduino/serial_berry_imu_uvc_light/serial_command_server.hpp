@@ -4,8 +4,8 @@
 
 enum SerialCommandStatus : uint8_t
 {
-  SUCCESS = 0,
-  FAILURE = 1
+  FAILURE = 0,
+  SUCCESS = 1
 };
 
 struct SerialCommandRequest

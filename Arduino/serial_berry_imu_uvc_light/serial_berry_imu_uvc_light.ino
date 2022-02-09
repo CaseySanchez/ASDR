@@ -5,7 +5,7 @@ SerialCommandServer serial_command_server;
 
 BerryIMU berry_imu;
 
-uint8_t imu_read(uint8_t const &request_size, uint8_t const *request_buffer, uint8_t &response_size, uint8_t *response_buffer)
+uint8_t berry_imu_read(uint8_t const &request_size, uint8_t const *request_buffer, uint8_t &response_size, uint8_t *response_buffer)
 {
   float gyr[3];
   float acc[3];
@@ -24,15 +24,15 @@ uint8_t imu_read(uint8_t const &request_size, uint8_t const *request_buffer, uin
   return SerialCommandStatus::SUCCESS;
 }
 
-uint8_t light_write(uint8_t const &request_size, uint8_t const *request_buffer, uint8_t &response_size, uint8_t *response_buffer)
+uint8_t uvc_light_write(uint8_t const &request_size, uint8_t const *request_buffer, uint8_t &response_size, uint8_t *response_buffer)
 {
   return SerialCommandStatus::SUCCESS;
 }
 
 void setup() 
 {
-  serial_command_server.registerCommand(0, &imu_read);
-  serial_command_server.registerCommand(1, &light_write);
+  serial_command_server.registerCommand(0, &berry_imu_read);
+  serial_command_server.registerCommand(1, &uvc_light_write);
   
   serial_command_server.enable();
   

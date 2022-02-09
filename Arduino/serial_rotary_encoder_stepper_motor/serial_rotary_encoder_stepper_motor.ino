@@ -5,32 +5,32 @@
 
 SerialCommandServer serial_command_server;
 
-uint32_t const ENCODER_COUNT = 2;
+uint32_t const ROTARY_ENCODER_COUNT = 2;
 
-RotaryEncoder encoder[ENCODER_COUNT] = {
+RotaryEncoder rotary_encoder[ROTARY_ENCODER_COUNT] = {
   RotaryEncoder(5, 6, RotaryEncoder::LatchMode::TWO03),
   RotaryEncoder(7, 8, RotaryEncoder::LatchMode::TWO03)
 };
 
 uint32_t const steps_per_revolution = 200;
 
-uint32_t const STEPPER_COUNT = 2;
+uint32_t const STEPPER_MOTOR_COUNT = 2;
 
-Stepper stepper[STEPPER_COUNT] = {
+Stepper stepper_motor[STEPPER_MOTOR_COUNT] = {
   Stepper(steps_per_revolution, 9, 10),
   Stepper(steps_per_revolution, 11, 12)
 };
 
-uint8_t encoder_read(uint8_t const &request_size, uint8_t const *request_buffer, uint8_t &response_size, uint8_t *response_buffer)
+uint8_t rotary_encoder_read(uint8_t const &request_size, uint8_t const *request_buffer, uint8_t &response_size, uint8_t *response_buffer)
 {
   if (request_size == sizeof(uint32_t)) {
-    uint32_t encoder_id;
+    uint32_t rotary_encoder_id;
   
-    memcpy(&encoder_id, &request_buffer[0], sizeof(uint32_t));
+    memcpy(&rotary_encoder_id, &request_buffer[0], sizeof(uint32_t));
     
-    if (encoder_id >= 0 && encoder_id < ENCODER_COUNT) {
-      int32_t position = encoder[encoder_id].getPosition();
-      int32_t direction = (int32_t)encoder[encoder_id].getDirection();
+    if (rotary_encoder_id >= 0 && rotary_encoder_id < ROTARY_ENCODER_COUNT) {
+      int32_t position = rotary_encoder[rotary_encoder_id].getPosition();
+      int32_t direction = (int32_t)rotary_encoder[rotary_encoder_id].getDirection();
 
       response_size = sizeof(int32_t) + sizeof(int32_t);
 
@@ -44,20 +44,20 @@ uint8_t encoder_read(uint8_t const &request_size, uint8_t const *request_buffer,
   return SerialCommandStatus::FAILURE;
 }
 
-uint8_t stepper_write(uint8_t const &request_size, uint8_t const *request_buffer, uint8_t &response_size, uint8_t *response_buffer) 
+uint8_t stepper_motor_write(uint8_t const &request_size, uint8_t const *request_buffer, uint8_t &response_size, uint8_t *response_buffer) 
 {
   if (request_size == sizeof(uint32_t) + sizeof(uint32_t) + sizeof(int32_t)) {
-    uint32_t stepper_id;
+    uint32_t stepper_motor_id;
     uint32_t speed;
     int32_t step;
 
-    memcpy(&stepper_id, &request_buffer[0], sizeof(uint32_t));
+    memcpy(&stepper_motor_id, &request_buffer[0], sizeof(uint32_t));
     memcpy(&speed, &request_buffer[sizeof(uint32_t)], sizeof(uint32_t));
     memcpy(&step, &request_buffer[sizeof(uint32_t) + sizeof(uint32_t)], sizeof(int32_t));
     
-    if (stepper_id >= 0 && stepper_id < STEPPER_COUNT) {
-      stepper[stepper_id].setSpeed(speed);
-      stepper[stepper_id].step(step);
+    if (stepper_motor_id >= 0 && stepper_motor_id < STEPPER_MOTOR_COUNT) {
+      stepper_motor[stepper_motor_id].setSpeed(speed);
+      stepper_motor[stepper_motor_id].step(step);
       
       return SerialCommandStatus::SUCCESS;
     }
@@ -68,8 +68,8 @@ uint8_t stepper_write(uint8_t const &request_size, uint8_t const *request_buffer
 
 void setup() 
 {
-  serial_command_server.registerCommand(0, &encoder_read); 
-  serial_command_server.registerCommand(1, &stepper_write); 
+  serial_command_server.registerCommand(0, &rotary_encoder_read); 
+  serial_command_server.registerCommand(1, &stepper_motor_write); 
   
   serial_command_server.enable();
 }
