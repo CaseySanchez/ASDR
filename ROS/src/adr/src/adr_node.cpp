@@ -51,9 +51,26 @@ bool ADRNode::onGetState(adr::get_state::Request &request, adr::get_state::Respo
             }
         }
         else if (m_finite_state_machine.isActive<Disinfect>()) {
-            response.state = "Disinfect";
+            if (m_finite_state_machine.isActive<LightOn>()) {
+                response.state = "LightOn";
 
-            return true;
+                return true;
+            }
+            else if (m_finite_state_machine.isActive<Navigate>()) {
+                response.state = "Navigate";
+
+                return true;
+            }
+            else if (m_finite_state_machine.isActive<LightOff>()) {
+                response.state = "LightOff";
+
+                return true;
+            }
+            else {
+                response.state = "Disinfect";
+
+                return true;
+            }
         }
         else {
             response.state = "Automatic"; 

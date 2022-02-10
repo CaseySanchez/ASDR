@@ -9,16 +9,18 @@ UVCLightNode::UVCLightNode(ros::NodeHandle const &node_handle) : m_node_handle(n
 
 bool UVCLightNode::onSetUVCLight(uvc_light::set_uvc_light::Request &request, uvc_light::set_uvc_light::Response &response)
 {
+    static uint8_t const UVC_LIGHT_COMMAND = 1;
+
     serial_command_client::send_command send_command_srv;
 
-    send_command_srv.request.command = 1;
+    send_command_srv.request.command = UVC_LIGHT_COMMAND;
 
-    send_command_srv.request.buffer.resize(sizeof(bool));
+    send_command_srv.request.buffer.resize(sizeof(uint8_t));
 
-    std::memcpy(&send_command_srv.request.buffer[0], &request.state, sizeof(bool));
+    std::memcpy(&send_command_srv.request.buffer[0], &request.state, sizeof(uint8_t));
 
     if (m_send_command_client.call(send_command_srv)) {
-        if (send_command_srv.response.status == 1) {
+        if (send_command_srv.response.status == serial_command_client::send_command::Response::SUCCESS) {
             return true;
         }
     }

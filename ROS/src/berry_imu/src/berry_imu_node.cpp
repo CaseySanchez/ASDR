@@ -10,12 +10,14 @@ BerryIMUNode::BerryIMUNode(ros::NodeHandle const &node_handle) : m_node_handle(n
 
 void BerryIMUNode::publish()
 {
+    static uint8_t const BERRY_IMU_COMMAND = 0;
+
     serial_command_client::send_command send_command_srv;
 
-    send_command_srv.request.command = 0;
+    send_command_srv.request.command = BERRY_IMU_COMMAND;
 
     if (m_send_command_client.call(send_command_srv)) {
-        if (send_command_srv.response.status == 1 && std::size(send_command_srv.response.buffer) == sizeof(float) * 3 * 3) {
+        if (send_command_srv.response.status == serial_command_client::send_command::Response::SUCCESS && std::size(send_command_srv.response.buffer) == sizeof(float) * 3 * 3) {
             float gyr[3];
             float acc[3];
             float mag[3];

@@ -6,10 +6,10 @@
 #include "ros/ros.h"
 #include "ros/console.h"
 
-#include "finite_state_machine.hpp"
-
 #include "adr/set_state.h"
 #include "adr/get_state.h"
+
+#include "finite_state_machine.hpp"
 
 class ADRNode
 {

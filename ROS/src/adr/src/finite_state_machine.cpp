@@ -127,10 +127,6 @@ void Map::enter(Control &control) noexcept
     ROS_INFO("Map state entered.");
 }
 
-void Map::update(FullControl &control) noexcept 
-{
-}
-
 void Map::exit(Control &control) noexcept
 {
     ROS_INFO("Map state exited.");
@@ -212,22 +208,69 @@ void Disinfect::entryGuard(GuardControl &control) noexcept
 {
     try {
         m_set_mode_localization_client = control.context().m_node_handle.serviceClient<std_srvs::Empty>("/rtabmap/set_mode_localization");
-        m_set_uvc_light_client = control.context().m_node_handle.serviceClient<uvc_light::set_uvc_light>("/dev/ttyUSB0/set_uvc_light");
-        m_make_plan_client = control.context().m_node_handle.serviceClient<coverage_path_planner::make_plan>("/adr/make_plan");
-
+    
         std_srvs::Empty set_mode_localization_srv;
 
         if (!m_set_mode_localization_client.call(set_mode_localization_srv)) {
             throw std::runtime_error("Failed to set RTABMAP mode to localization.");
         }
+    }
+    catch (std::exception const &exception) {
+        ROS_ERROR("%s", exception.what());
+
+        control.changeTo<Idle>();
+    }
+}
+
+void Disinfect::enter(Control &control) noexcept
+{
+    ROS_INFO("Disinfect state entered.");
+}
+
+void Disinfect::exit(Control &control) noexcept
+{
+    ROS_INFO("Disinfect state exited.");
+}
+
+void LightOn::entryGuard(GuardControl &control) noexcept 
+{
+    try {
+        m_set_uvc_light_client = control.context().m_node_handle.serviceClient<uvc_light::set_uvc_light>("/dev/ttyUSB0/set_uvc_light");
 
         uvc_light::set_uvc_light set_uvc_light_srv;
 
-        set_uvc_light_srv.request.state = true;
+        set_uvc_light_srv.request.state = uvc_light::set_uvc_light::Request::ON;
 
         if (!m_set_uvc_light_client.call(set_uvc_light_srv)) {
             throw std::runtime_error("Failed to turn UVC light on.");
         }
+    }
+    catch (std::exception const &exception) {
+        ROS_ERROR("%s", exception.what());
+
+        control.changeTo<Idle>();
+    }
+}
+
+void LightOn::enter(Control &control) noexcept
+{
+    ROS_INFO("LightOn state entered.");
+}
+
+void LightOn::update(FullControl &control) noexcept 
+{
+    control.changeTo<Navigate>();
+}
+
+void LightOn::exit(Control &control) noexcept
+{
+    ROS_INFO("LightOn state exited.");
+}
+
+void Navigate::entryGuard(GuardControl &control) noexcept 
+{
+    try {
+        m_make_plan_client = control.context().m_node_handle.serviceClient<coverage_path_planner::make_plan>("/adr/make_plan");
 
         coverage_path_planner::make_plan make_plan_srv;
 
@@ -263,19 +306,19 @@ void Disinfect::entryGuard(GuardControl &control) noexcept
     }
 }
 
-void Disinfect::enter(Control &control) noexcept
+void Navigate::enter(Control &control) noexcept
 {
-    ROS_INFO("Disinfect state entered.");
+    ROS_INFO("Navigate state entered.");
 }
 
-void Disinfect::update(FullControl &control) noexcept 
+void Navigate::update(FullControl &control) noexcept 
 {
     try {
         if(control.context().m_move_base_client->getState() == actionlib::SimpleClientGoalState::SUCCEEDED) {
             m_plan_iterator = std::next(m_plan_iterator);
 
             if (m_plan_iterator == std::cend(m_plan)) {
-                control.changeTo<Idle>();
+                control.changeTo<LightOff>();
             }
             else {
                 ROS_INFO("Navigating to waypoint %zu of %zu.", std::distance(std::cbegin(m_plan), m_plan_iterator) + 1, std::size(m_plan));
@@ -301,12 +344,17 @@ void Disinfect::update(FullControl &control) noexcept
     }
 }
 
-void Disinfect::exitGuard(GuardControl &control) noexcept
+void Navigate::exit(Control &control) noexcept
+{
+    ROS_INFO("Navigate state exited.");
+}
+
+void LightOff::entryGuard(GuardControl &control) noexcept 
 {
     try {
         uvc_light::set_uvc_light set_uvc_light_srv;
 
-        set_uvc_light_srv.request.state = false;
+        set_uvc_light_srv.request.state = uvc_light::set_uvc_light::Request::OFF;
 
         if (!m_set_uvc_light_client.call(set_uvc_light_srv)) {
             throw std::runtime_error("Failed to turn UVC light off.");
@@ -319,7 +367,17 @@ void Disinfect::exitGuard(GuardControl &control) noexcept
     }
 }
 
-void Disinfect::exit(Control &control) noexcept
+void LightOff::enter(Control &control) noexcept
 {
-    ROS_INFO("Disinfect state exited.");
+    ROS_INFO("LightOff state entered.");
+}
+
+void LightOff::update(FullControl &control) noexcept 
+{
+    control.changeTo<Idle>();
+}
+
+void LightOff::exit(Control &control) noexcept
+{
+    ROS_INFO("LightOff state exited.");
 }
