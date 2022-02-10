@@ -109,9 +109,9 @@ void Map::entryGuard(GuardControl &control) noexcept
     try {
         m_set_mode_mapping_client = control.context().m_node_handle.serviceClient<std_srvs::Empty>("/rtabmap/set_mode_mapping");
 
-        std_srvs::Empty empty_srv;
+        std_srvs::Empty set_mode_mapping_srv;
 
-        if (!m_set_mode_mapping_client.call(empty_srv)) {
+        if (!m_set_mode_mapping_client.call(set_mode_mapping_srv)) {
             throw std::runtime_error("Failed to set RTABMAP mode to mapping.");
         }
     }
@@ -158,15 +158,15 @@ void Explore::entryGuard(GuardControl &control) noexcept
             throw std::runtime_error("Failed to discover.");
         }
         else {
-            if (discover_srv.response.status == 1) {
+            if (discover_srv.response.status == discovery::discover::Response::FAILURE) {
+                control.changeTo<Disinfect>();
+            }
+            else if (discover_srv.response.status == discovery::discover::Response::SUCCESS) {
                 move_base_msgs::MoveBaseGoal goal;
 
                 goal.target_pose = discover_srv.response.pose_stamped;
 
                 control.context().m_move_base_client->sendGoal(goal);
-            }
-            else {
-                control.changeTo<Disinfect>();
             }
         }
     }
@@ -185,11 +185,11 @@ void Explore::enter(Control &control) noexcept
 void Explore::update(FullControl &control) noexcept 
 {
     try {
-        if(control.context().m_move_base_client->getState() == actionlib::SimpleClientGoalState::SUCCEEDED) {
-            control.changeTo<Observe>();
-        }
-        else if (control.context().m_move_base_client->getState() == actionlib::SimpleClientGoalState::ABORTED) {
+        if (control.context().m_move_base_client->getState() == actionlib::SimpleClientGoalState::ABORTED) {
             throw std::runtime_error("Navigation aborted.");
+        }
+        else if(control.context().m_move_base_client->getState() == actionlib::SimpleClientGoalState::SUCCEEDED) {
+            control.changeTo<Observe>();
         }
     }
     catch (std::exception const &exception) {
@@ -302,7 +302,7 @@ void Navigate::entryGuard(GuardControl &control) noexcept
     catch (std::exception const &exception) {
         ROS_ERROR("%s", exception.what());
 
-        control.changeTo<Idle>();
+        control.changeTo<LightOff>();
     }
 }
 
@@ -314,7 +314,10 @@ void Navigate::enter(Control &control) noexcept
 void Navigate::update(FullControl &control) noexcept 
 {
     try {
-        if(control.context().m_move_base_client->getState() == actionlib::SimpleClientGoalState::SUCCEEDED) {
+        if (control.context().m_move_base_client->getState() == actionlib::SimpleClientGoalState::ABORTED) {
+            throw std::runtime_error("Navigation aborted.");
+        }
+        else if(control.context().m_move_base_client->getState() == actionlib::SimpleClientGoalState::SUCCEEDED) {
             m_plan_iterator = std::next(m_plan_iterator);
 
             if (m_plan_iterator == std::cend(m_plan)) {
@@ -333,14 +336,11 @@ void Navigate::update(FullControl &control) noexcept
                 control.context().m_move_base_client->sendGoal(goal);
             }
         }
-        else if (control.context().m_move_base_client->getState() == actionlib::SimpleClientGoalState::ABORTED) {
-            throw std::runtime_error("Navigation aborted.");
-        }
     }
     catch (std::exception const &exception) {
         ROS_ERROR("%s", exception.what());
 
-        control.changeTo<Idle>();
+        control.changeTo<LightOff>();
     }
 }
 

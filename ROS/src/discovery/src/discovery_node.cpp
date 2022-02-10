@@ -70,10 +70,10 @@ bool DiscoveryNode::onDiscover(discovery::discover::Request &request, discovery:
 
             response.pose_stamped = pose_stamped;
 
-            response.status = 1;
+            response.status = discovery::discover::Response::SUCCESS;
         }
         else {
-            response.status = 0;
+            response.status = discovery::discover::Response::FAILURE;
         }
 
         return true;
