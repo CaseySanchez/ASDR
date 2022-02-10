@@ -352,6 +352,8 @@ void Navigate::exit(Control &control) noexcept
 void LightOff::entryGuard(GuardControl &control) noexcept 
 {
     try {
+        m_set_uvc_light_client = control.context().m_node_handle.serviceClient<uvc_light::set_uvc_light>("/dev/ttyUSB0/set_uvc_light");
+        
         uvc_light::set_uvc_light set_uvc_light_srv;
 
         set_uvc_light_srv.request.state = uvc_light::set_uvc_light::Request::OFF;
