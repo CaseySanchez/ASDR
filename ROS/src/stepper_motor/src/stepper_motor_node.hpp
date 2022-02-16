@@ -18,6 +18,8 @@ class StepperMotorNode
     
     ros::ServiceClient m_send_command_client;
 
+    uint32_t m_stepper_motor_id;
+
 public:
     StepperMotorNode(ros::NodeHandle const &node_handle);
 

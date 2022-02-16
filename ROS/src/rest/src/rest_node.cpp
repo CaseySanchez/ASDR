@@ -1,6 +1,8 @@
 #include "rest_node.hpp"
 
-RESTNode::RESTNode(ros::NodeHandle const &node_handle) : m_node_handle(node_handle), m_listener("http://0.0.0.0:8080")
+RESTNode::RESTNode(ros::NodeHandle const &node_handle) : 
+    m_node_handle { node_handle }, 
+    m_listener { "http://0.0.0.0:8080" }
 {   
     m_get_state_client = m_node_handle.serviceClient<adr::get_state>(ros::names::resolve("get_state"));
     m_set_state_client = m_node_handle.serviceClient<adr::set_state>(ros::names::resolve("set_state"));

@@ -1,6 +1,7 @@
 #include "coverage_path_planner_node.hpp"
 
-CoveragePathPlannerNode::CoveragePathPlannerNode(ros::NodeHandle &node_handle) : m_node_handle(node_handle)
+CoveragePathPlannerNode::CoveragePathPlannerNode(ros::NodeHandle const &node_handle) : 
+    m_node_handle { node_handle }
 {
     if (!m_node_handle.getParam("extrude_distance", m_extrude_distance)) {
         throw std::runtime_error("extrude_distance not provided");

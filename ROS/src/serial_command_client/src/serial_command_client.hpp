@@ -35,5 +35,5 @@ public:
     void open(std::string const &path_name);
     void close();
 
-    void sendCommand(SerialCommandRequest const &request, SerialCommandResponse &response);
+    bool sendCommand(SerialCommandRequest const &request, SerialCommandResponse &response);
 };

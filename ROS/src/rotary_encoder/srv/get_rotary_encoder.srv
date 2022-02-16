@@ -1,4 +1,3 @@
-uint32 rotary_encoder_id
 ---
-int32 position
-int32 direction
+float32 position
+float32 velocity

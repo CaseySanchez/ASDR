@@ -1,6 +1,7 @@
 #include "discovery_node.hpp"
 
-DiscoveryNode::DiscoveryNode(ros::NodeHandle &node_handle) : m_node_handle(node_handle)
+DiscoveryNode::DiscoveryNode(ros::NodeHandle const &node_handle) : 
+    m_node_handle { node_handle }
 {
     m_occupancy_grid_subscriber = m_node_handle.subscribe(ros::names::resolve("/rtabmap/grid_map"), 1, &DiscoveryNode::onOccupancyGrid, this);
 

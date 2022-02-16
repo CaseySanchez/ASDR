@@ -1,6 +1,7 @@
 #include "uvc_light_node.hpp"
 
-UVCLightNode::UVCLightNode(ros::NodeHandle const &node_handle) : m_node_handle(node_handle)
+UVCLightNode::UVCLightNode(ros::NodeHandle const &node_handle) : 
+    m_node_handle { node_handle }
 {
     m_set_uvc_light_server = m_node_handle.advertiseService(ros::names::resolve("set_uvc_light"), &UVCLightNode::onSetUVCLight, this);
 

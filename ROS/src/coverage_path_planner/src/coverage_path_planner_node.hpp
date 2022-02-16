@@ -30,7 +30,7 @@ class CoveragePathPlannerNode
     float m_slice_spacing;
 
 public:
-    CoveragePathPlannerNode(ros::NodeHandle &node_handle);
+    CoveragePathPlannerNode(ros::NodeHandle const &node_handle);
 
 private:
     void onOccupancyGrid(nav_msgs::OccupancyGrid::ConstPtr const &occupancy_grid);

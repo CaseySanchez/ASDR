@@ -31,7 +31,7 @@ class DiscoveryNode
     std::optional<nav_msgs::OccupancyGrid> m_occupancy_grid;
 
 public:
-    DiscoveryNode(ros::NodeHandle &node_handle);
+    DiscoveryNode(ros::NodeHandle const &node_handle);
 
 private:
     void onOccupancyGrid(nav_msgs::OccupancyGrid::ConstPtr const &occupancy_grid);

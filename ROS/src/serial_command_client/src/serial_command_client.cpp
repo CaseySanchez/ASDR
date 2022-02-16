@@ -23,19 +23,25 @@ void SerialCommandClient::close()
     }
 }
 
-void SerialCommandClient::sendCommand(SerialCommandRequest const &request, SerialCommandResponse &response)
+bool SerialCommandClient::sendCommand(SerialCommandRequest const &request, SerialCommandResponse &response)
 {
-    m_serial->write(&request.command, sizeof(uint8_t));
-    m_serial->write(&request.size, sizeof(uint8_t));
+    if (m_serial->isOpen()) {
+        m_serial->write(&request.command, sizeof(uint8_t));
+        m_serial->write(&request.size, sizeof(uint8_t));
 
-    if (request.size > 0) {
-        m_serial->write(&request.buffer[0], request.size);
+        if (request.size > 0) {
+            m_serial->write(&request.buffer[0], request.size);
+        }
+
+        m_serial->read(&response.status, sizeof(uint8_t));
+        m_serial->read(&response.size, sizeof(uint8_t));
+
+        if (response.size > 0) {
+            m_serial->read(&response.buffer[0], response.size);
+        }
+
+        return true;
     }
 
-    m_serial->read(&response.status, sizeof(uint8_t));
-    m_serial->read(&response.size, sizeof(uint8_t));
-
-    if (response.size > 0) {
-        m_serial->read(&response.buffer[0], response.size);
-    }
+    return false;
 }

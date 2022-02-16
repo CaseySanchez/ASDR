@@ -1,13 +1,12 @@
 #include "adr_node.hpp"
 
-ADRNode::ADRNode(ros::NodeHandle const &node_handle) : m_node_handle(node_handle), m_context(node_handle), m_finite_state_machine(m_context)
+ADRNode::ADRNode(ros::NodeHandle const &node_handle) : 
+    m_node_handle { node_handle }, 
+    m_context { node_handle }, 
+    m_finite_state_machine { m_context }
 {
     m_get_state_server = m_node_handle.advertiseService(ros::names::resolve("get_state"), &ADRNode::onGetState, this);
     m_set_state_server = m_node_handle.advertiseService(ros::names::resolve("set_state"), &ADRNode::onSetState, this);
-}
-
-ADRNode::~ADRNode()
-{
 }
 
 void ADRNode::update()

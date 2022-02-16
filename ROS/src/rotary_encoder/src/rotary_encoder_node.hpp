@@ -18,8 +18,12 @@ class RotaryEncoderNode
     
     ros::ServiceClient m_send_command_client;
 
+    uint32_t m_rotary_encoder_id;
+
 public:
     RotaryEncoderNode(ros::NodeHandle const &node_handle);
+
+    void update(ros::Duration const &period);
 
 private:
     bool onGetRotaryEncoder(rotary_encoder::get_rotary_encoder::Request &request, rotary_encoder::get_rotary_encoder::Response &response);

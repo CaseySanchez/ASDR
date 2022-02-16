@@ -1,6 +1,7 @@
 #include "serial_command_client_node.hpp"
 
-SerialCommandClientNode::SerialCommandClientNode(ros::NodeHandle const &node_handle) : m_node_handle(node_handle)
+SerialCommandClientNode::SerialCommandClientNode(ros::NodeHandle const &node_handle) : 
+    m_node_handle { node_handle }
 {
     std::string path_name;
 
@@ -23,25 +24,23 @@ bool SerialCommandClientNode::onSendCommand(serial_command_client::send_command:
     SerialCommandRequest serial_command_request;
     SerialCommandResponse serial_command_response;
 
-    {
-        serial_command_request.command = request.command;
+    serial_command_request.command = request.command;
 
-        serial_command_request.size = std::size(request.buffer);
+    serial_command_request.size = std::size(request.buffer);
 
-        std::memcpy(&serial_command_request.buffer[0], &request.buffer[0], std::size(request.buffer));
-    }
+    std::memcpy(&serial_command_request.buffer[0], &request.buffer[0], std::size(request.buffer));
 
-    m_serial_command_client.sendCommand(serial_command_request, serial_command_response);
-
-    {
+    if (m_serial_command_client.sendCommand(serial_command_request, serial_command_response)) {
         response.status = serial_command_response.status;
 
         response.buffer.resize(serial_command_response.size);
         
         std::memcpy(&response.buffer[0], &serial_command_response.buffer[0], serial_command_response.size);
+
+        return true;
     }
 
-    return true;
+    return false;
 }
 
 int main(int argc, char **argv)

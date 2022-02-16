@@ -1,4 +1,2 @@
-uint32 stepper_motor_id
-uint32 speed
-int32 step
+float32 velocity
 ---

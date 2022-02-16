@@ -1,8 +1,17 @@
 #include "rotary_encoder_node.hpp"
 
-RotaryEncoderNode::RotaryEncoderNode(ros::NodeHandle const &node_handle) : m_node_handle(node_handle)
+RotaryEncoderNode::RotaryEncoderNode(ros::NodeHandle const &node_handle) : 
+    m_node_handle { node_handle }
 {
-    m_get_rotary_encoder_server = m_node_handle.advertiseService(ros::names::resolve("get_rotary_encoder"), &RotaryEncoderNode::onGetRotaryEncoder, this);
+    int32_t rotary_encoder_id;
+
+    if (!m_node_handle.getParam("rotary_encoder_id", rotary_encoder_id)) {
+        throw std::runtime_error("rotary_encoder_id not provided.");
+    }
+
+    m_rotary_encoder_id = static_cast<uint32_t>(rotary_encoder_id);
+
+    m_get_rotary_encoder_server = m_node_handle.advertiseService(ros::names::resolve(std::to_string(m_rotary_encoder_id) + "/get_rotary_encoder"), &RotaryEncoderNode::onGetRotaryEncoder, this);
 
     m_send_command_client = m_node_handle.serviceClient<serial_command_client::send_command>(ros::names::resolve("send_command"));
 }
@@ -17,12 +26,12 @@ bool RotaryEncoderNode::onGetRotaryEncoder(rotary_encoder::get_rotary_encoder::R
 
     send_command_srv.request.buffer.resize(sizeof(uint32_t));
 
-    std::memcpy(&send_command_srv.request.buffer[0], &request.rotary_encoder_id, sizeof(uint32_t));
+    std::memcpy(&send_command_srv.request.buffer[0], &m_rotary_encoder_id, sizeof(uint32_t));
 
     if (m_send_command_client.call(send_command_srv)) {
-        if (send_command_srv.response.status == serial_command_client::send_command::Response::SUCCESS && std::size(send_command_srv.response.buffer) == sizeof(int32_t) + sizeof(int32_t)) {
-            std::memcpy(&response.position, &send_command_srv.response.buffer[0], sizeof(int32_t));
-            std::memcpy(&response.direction, &send_command_srv.response.buffer[sizeof(int32_t)], sizeof(int32_t));
+        if (send_command_srv.response.status == serial_command_client::send_command::Response::SUCCESS && std::size(send_command_srv.response.buffer) == sizeof(float) + sizeof(float)) {
+            std::memcpy(&response.position, &send_command_srv.response.buffer[0], sizeof(float));
+            std::memcpy(&response.velocity, &send_command_srv.response.buffer[sizeof(float)], sizeof(float));
 
             return true;
         }

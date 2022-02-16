@@ -24,7 +24,6 @@ class ADRNode
 
 public:
     ADRNode(ros::NodeHandle const &node_handle);
-    ~ADRNode();
 
     void update();
 
