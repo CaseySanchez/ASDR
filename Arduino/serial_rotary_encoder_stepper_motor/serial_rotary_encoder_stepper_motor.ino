@@ -1,5 +1,5 @@
-#include <RotaryEncoder.h>
-#include <Stepper.h>
+#include "rotary_encoder.hpp"
+#include "stepper_motor.hpp"
 
 #include "serial_command_server.hpp"
 
@@ -8,17 +8,15 @@ SerialCommandServer serial_command_server;
 uint32_t const ROTARY_ENCODER_COUNT = 2;
 
 RotaryEncoder rotary_encoder[ROTARY_ENCODER_COUNT] = {
-  RotaryEncoder(5, 6, RotaryEncoder::LatchMode::TWO03),
-  RotaryEncoder(7, 8, RotaryEncoder::LatchMode::TWO03)
+  RotaryEncoder(5, 6, 300),
+  RotaryEncoder(7, 8, 300)
 };
-
-uint32_t const steps_per_revolution = 200;
 
 uint32_t const STEPPER_MOTOR_COUNT = 2;
 
-Stepper stepper_motor[STEPPER_MOTOR_COUNT] = {
-  Stepper(steps_per_revolution, 9, 10),
-  Stepper(steps_per_revolution, 11, 12)
+StepperMotor stepper_motor[STEPPER_MOTOR_COUNT] = {
+  StepperMotor(9, 10, 15652, 3.141592f / 3.0f),
+  StepperMotor(11, 12, 15652, 3.141592f / 3.0f)
 };
 
 uint8_t rotary_encoder_read(uint8_t const &request_size, uint8_t const *request_buffer, uint8_t &response_size, uint8_t *response_buffer)
@@ -29,13 +27,13 @@ uint8_t rotary_encoder_read(uint8_t const &request_size, uint8_t const *request_
     memcpy(&rotary_encoder_id, &request_buffer[0], sizeof(uint32_t));
     
     if (rotary_encoder_id >= 0 && rotary_encoder_id < ROTARY_ENCODER_COUNT) {
-      int32_t position = rotary_encoder[rotary_encoder_id].getPosition();
-      int32_t direction = (int32_t)rotary_encoder[rotary_encoder_id].getDirection();
+      float const position = rotary_encoder[rotary_encoder_id].getPosition();
+      float const velocity = rotary_encoder[rotary_encoder_id].getVelocity();
 
-      response_size = sizeof(int32_t) + sizeof(int32_t);
+      response_size = sizeof(float) + sizeof(float);
 
-      memcpy(&response_buffer[0], &position, sizeof(int32_t));
-      memcpy(&response_buffer[sizeof(int32_t)], &direction, sizeof(int32_t));
+      memcpy(&response_buffer[0], &position, sizeof(float));
+      memcpy(&response_buffer[sizeof(float)], &velocity, sizeof(float));
   
       return SerialCommandStatus::SUCCESS;
     }
@@ -46,18 +44,15 @@ uint8_t rotary_encoder_read(uint8_t const &request_size, uint8_t const *request_
 
 uint8_t stepper_motor_write(uint8_t const &request_size, uint8_t const *request_buffer, uint8_t &response_size, uint8_t *response_buffer) 
 {
-  if (request_size == sizeof(uint32_t) + sizeof(uint32_t) + sizeof(int32_t)) {
+  if (request_size == sizeof(uint32_t) + sizeof(float)) {
     uint32_t stepper_motor_id;
-    uint32_t speed;
-    int32_t step;
+    float velocity;
 
     memcpy(&stepper_motor_id, &request_buffer[0], sizeof(uint32_t));
-    memcpy(&speed, &request_buffer[sizeof(uint32_t)], sizeof(uint32_t));
-    memcpy(&step, &request_buffer[sizeof(uint32_t) + sizeof(uint32_t)], sizeof(int32_t));
+    memcpy(&velocity, &request_buffer[sizeof(uint32_t)], sizeof(float));
     
     if (stepper_motor_id >= 0 && stepper_motor_id < STEPPER_MOTOR_COUNT) {
-      stepper_motor[stepper_motor_id].setSpeed(speed);
-      stepper_motor[stepper_motor_id].step(step);
+      stepper_motor[stepper_motor_id].setVelocity(velocity);
       
       return SerialCommandStatus::SUCCESS;
     }
@@ -77,4 +72,12 @@ void setup()
 void loop() 
 {
   serial_command_server.listen();
+
+  for (uint32_t rotary_encoder_id = 0; rotary_encoder_id < ROTARY_ENCODER_COUNT; ++rotary_encoder_id) {
+    rotary_encoder[rotary_encoder_id].update();
+  }
+
+  for (uint32_t stepper_motor_id = 0; stepper_motor_id < STEPPER_MOTOR_COUNT; ++stepper_motor_id) {
+    stepper_motor[stepper_motor_id].update();
+  }
 }
