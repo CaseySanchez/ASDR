@@ -8,17 +8,17 @@ BerryIMU::BerryIMU(int32_t const &FS_G, int32_t const &FS_XL, int32_t const &FS_
 void BerryIMU::enable()
 {
     //Enable  gyroscope
-    write(LSM6DSL_ADDRESS, LSM6DSL_CTRL2_G, 0b10010000 | (FS_G_bits[m_FS_G] << 2));        // ODR 3.3 kHz, 2000 dps
+    write(LSM6DSL_ADDRESS, LSM6DSL_CTRL2_G, 0b10010000 | (FS_G_bits[m_FS_G] << 2));
 
     // Enable the accelerometer
-    write(LSM6DSL_ADDRESS, LSM6DSL_CTRL1_XL, 0b10010011 | (FS_XL_bits[m_FS_XL] << 2));       // ODR 3.33 kHz, +/- 8g , BW = 400hz
-    write(LSM6DSL_ADDRESS, LSM6DSL_CTRL8_XL, 0b11001000);       // Low pass filter enabled, BW9, composite filter
-    write(LSM6DSL_ADDRESS, LSM6DSL_CTRL3_C, 0b01000100);        // Enable Block Data update, increment during multi byte read
+    write(LSM6DSL_ADDRESS, LSM6DSL_CTRL1_XL, 0b10010011 | (FS_XL_bits[m_FS_XL] << 2));
+    write(LSM6DSL_ADDRESS, LSM6DSL_CTRL8_XL, 0b11001000);
+    write(LSM6DSL_ADDRESS, LSM6DSL_CTRL3_C, 0b01000100);
 
     //Enable  magnetometer
-    write(LIS3MDL_ADDRESS, LIS3MDL_CTRL_REG1, 0b11011100);     // Temp sesnor enabled, High performance, ODR 80 Hz, FAST ODR disabled and Selft test disabled.
-    write(LIS3MDL_ADDRESS, LIS3MDL_CTRL_REG2, 0b00000000 | (FS_M_bits[m_FS_M] << 5));     // +/- 8 gauss
-    write(LIS3MDL_ADDRESS, LIS3MDL_CTRL_REG3, 0b00000000);     // Continuous-conversion mode
+    write(LIS3MDL_ADDRESS, LIS3MDL_CTRL_REG1, 0b11011100);
+    write(LIS3MDL_ADDRESS, LIS3MDL_CTRL_REG2, 0b00000000 | (FS_M_bits[m_FS_M] << 5));
+    write(LIS3MDL_ADDRESS, LIS3MDL_CTRL_REG3, 0b00000000);
 }
 
 // Convert to SI units [mdeg/sec]->[rad/sec]

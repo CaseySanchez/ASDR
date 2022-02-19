@@ -6,18 +6,18 @@
 
 class StepperMotor
 {  
-  PWM m_pwm;
-
-  uint8_t m_dir_pin;
+    PWM m_pwm;
   
-  uint32_t m_steps_per_revolution;
-
-  float m_max_velocity;
+    uint8_t m_dir_pin;
+    
+    uint32_t m_steps_per_revolution;
+  
+    float m_max_velocity;
   
 public:
-  StepperMotor(uint8_t const &pwm_pin, uint8_t const &dir_pin, uint32_t const &steps_per_revolution, float const &max_velocity);
-
-  void setVelocity(float const &velocity);
-
-  void update();
+    StepperMotor(uint8_t const &pwm_pin, uint8_t const &dir_pin, uint32_t const &steps_per_revolution, float const &max_velocity);
+  
+    void setVelocity(float const &velocity);
+  
+    void update();
 };
