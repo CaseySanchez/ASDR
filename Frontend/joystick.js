@@ -54,9 +54,7 @@ export default {
             context: undefined,
             pressed: 0,
             x_position: 0.0,
-            y_position: 0.0,
-            x_value: 0.0,
-            y_value: 0.0
+            y_position: 0.0
         };
     },
     methods: {
@@ -116,15 +114,10 @@ export default {
         update: function() {    
             this.draw();
     
-            this.x_value = (this.x_position - this.xCenter()) / this.xMax();
-            this.y_value = (this.y_position - this.yCenter()) / this.yMax() * -1.0;
+            const x_value = (this.x_position - this.xCenter()) / this.xMax();
+            const y_value = (this.y_position - this.yCenter()) / this.yMax() * -1.0;
     
-            this.$emit("joystickMove", {
-                x_position: this.x_position,
-                y_position: this.y_position,
-                x_value: this.x_value,
-                y_value: this.y_value
-            });
+            this.$emit("joystickMove", x_value, y_value);
         },
         onTouchStart: function(event) {
             this.pressed = 1;
