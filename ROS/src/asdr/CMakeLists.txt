@@ -1,6 +1,6 @@
 # %Tag(FULLTEXT)%
 cmake_minimum_required(VERSION 3.8)
-project(adr)
+project(asdr)
 
 ## Find catkin and any catkin packages
 find_package(catkin REQUIRED COMPONENTS roscpp rospy std_msgs genmsg actionlib move_base_msgs uvc_light coverage_path_planner)
@@ -21,10 +21,10 @@ include_directories(include HFSM2/include ${catkin_INCLUDE_DIRS})
 
 # %Tag(SRVCLIENT)%
 
-add_executable(adr_node src/adr_node.cpp src/finite_state_machine.cpp)
-target_link_libraries(adr_node ${catkin_LIBRARIES} Threads::Threads)
-add_dependencies(adr_node adr_gencpp ${catkin_EXPORTED_TARGETS})
-set_property(TARGET adr_node PROPERTY CXX_STANDARD 17)
+add_executable(asdr_node src/asdr_node.cpp src/finite_state_machine.cpp)
+target_link_libraries(asdr_node ${catkin_LIBRARIES} Threads::Threads)
+add_dependencies(asdr_node asdr_gencpp ${catkin_EXPORTED_TARGETS})
+set_property(TARGET asdr_node PROPERTY CXX_STANDARD 17)
 
 # %EndTag(SRVCLIENT)%
 

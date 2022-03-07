@@ -49,6 +49,6 @@ class MobileBaseNode : public hardware_interface::RobotHW
 public:
     MobileBaseNode(ros::NodeHandle const &node_handle);
     
-    void write(ros::Duration const &period);
     void read(ros::Duration const &period);
+    void write(ros::Duration const &period);
 };

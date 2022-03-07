@@ -1,52 +1,73 @@
 export default {
     name: "Joystick",
     props: {
-        width: {
-            type: Number,
-            default: 100.0,
-            coerce: str => Number(str)
-        },
-        height: {
-            type: Number,
-            default: 100.0,
-            coerce: str => Number(str)
-        },
         x_max: {
             type: Number,
             default: 1.0,
-            coerce: str => Number(str)
+            coerce: function(str) { 
+                return Math.min(1.0, Math.max(0.0, Number(str)));
+            },
+            validator: function(str) {
+                return Number.isNaN(Number(str)) === false;
+            }
         },
         y_max: {
             type: Number,
             default: 1.0,
-            coerce: str => Number(str)
+            coerce: function(str) {
+                return Math.min(1.0, Math.max(0.0, Number(str)));
+            },
+            validator: function(str) {
+                return Number.isNaN(Number(str)) === false;
+            }
         },
         internal_line_width: {
             type: Number,
             default: 2.0,
-            coerce: str => Number(str)
+            coerce: function(str) {
+                return Math.max(1.0, Number(str));
+            },
+            validator: function(str) {
+                return Number.isNaN(Number(str)) === false;
+            }
         },
         internal_fill_color: {
             type: String,
-            default: "#cccccc"
+            default: "#cccccc",
+            validator: function(str) {
+                return CSS.supports("color", str) === true;
+            }
         },
         internal_stroke_color: {
             type: String,
-            default: "#888888"
+            default: "#888888",
+            validator: function(str) {
+                return CSS.supports("color", str) === true;
+            }
         },
         external_line_width: {
             type: Number,
             default: 2.0,
-            coerce: str => Number(str)
+            coerce: function(str) {
+                return Number(str);
+            },
+            validator: function(str) {
+                return Number.isNaN(Number(str)) === false;
+            }
         },
         external_stroke_color: {
             type: String,
-            default: "#444444"
+            default: "#444444",
+            validator: function(str) {
+                return CSS.supports("color", str) === true;
+            }
         },
         auto_return_to_center: {
             type: Boolean,
             default: true,
-            coerce: str => str === "true"
+            coerce: function(str) {
+                return str === "true";
+            }
         }
     },
     data() {
@@ -58,23 +79,23 @@ export default {
         };
     },
     methods: {
+        radius: function() {
+            return Math.min(this.$refs.canvas.width, this.$refs.canvas.height) * 0.25;
+        },
         xCenter: function() {
-            return this.width * 0.5;
+            return this.$refs.canvas.width * 0.5;
         },
         yCenter: function() {
-            return this.height * 0.5;
+            return this.$refs.canvas.height * 0.5;
         },
         xMax: function() {
-            return this.width * Math.min(1.0, Math.max(0.0, this.x_max)) * 0.25;
+            return this.radius() * this.x_max;
         },
         yMax: function() {
-            return this.height * Math.min(1.0, Math.max(0.0, this.y_max)) * 0.25;
-        },
-        radius: function() {
-            return Math.min(this.width * 0.25, this.height * 0.25);
+            return this.radius() * this.y_max;
         },
         draw: function() {
-            this.context.clearRect(0.0, 0.0, this.width, this.height);
+            this.context.clearRect(0.0, 0.0, this.$refs.canvas.width, this.$refs.canvas.height);
             
             if (Math.abs(this.x_position - this.xCenter()) > this.xMax()) {
                 this.x_position = this.xCenter() + this.xMax() * Math.sign(this.x_position - this.xCenter());
@@ -123,7 +144,7 @@ export default {
             this.pressed = 1;
         },    
         onTouchMove: function(event) {
-            if (this.pressed === 1 && event.targetTouches[0].target === this.$refs.canvas) {
+            if (this.pressed === 1) {
                 this.x_position = event.targetTouches[0].pageX - this.$refs.canvas.offsetLeft;
                 this.y_position = event.targetTouches[0].pageY - this.$refs.canvas.offsetTop;
     
@@ -170,13 +191,13 @@ export default {
         };
     },
     mounted() {
-        this.x_position = this.width * 0.5;
-        this.y_position = this.height * 0.5;
-
-        this.$refs.canvas.width = this.width;
-        this.$refs.canvas.height = this.height;
+        this.$refs.canvas.width = this.$el.clientWidth;
+        this.$refs.canvas.height = this.$el.clientHeight;
 
         this.context = this.$refs.canvas.getContext("2d");
+
+        this.x_position = this.$refs.canvas.width * 0.5;
+        this.y_position = this.$refs.canvas.height * 0.5;
 
         this.draw();
     },    

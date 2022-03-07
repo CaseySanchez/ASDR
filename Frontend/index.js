@@ -7,95 +7,163 @@ export default {
     },
     data() {
         return {
-            state: "Idle",
-            loading: false
+            error: undefined,
+            state: undefined,
+            loading: false,
+            x_value: 0.0,
+            y_value: 0.0
         };
     },
-    methods: {
-        onClickState: function() {
-            this.loading = true;
+    watch: {
+        state: function(new_value, old_value) {
+            if (new_value !== undefined && old_value !== undefined) {
+                var self = this;
 
-            var that = this;
+                async function set_state() {
+                    self.loading = true;
 
-            var query = new URLSearchParams({
-                state: this.state
-            });
+                    var query = new URLSearchParams({
+                        state: new_value
+                    });
 
-            fetch("http://0.0.0.0:8080/set_state?" + query.toString(), {
-                method: "POST",
-                headers: {
-                    "Content-Type": "text/plain; charset=UTF-8",
-                    "Access-Control-Allow-Origin": "*"
+                    await fetch("http://0.0.0.0:8080/set_state?" + query.toString(), {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "text/plain; charset=UTF-8"
+                        }
+                    })
+                    .then(function(response) {
+                        console.log("SUCCESS: " + response);
+                        
+                        self.loading = false;
+                    })
+                    .catch(function(response) {
+                        console.log("FAILURE: " + response);
+
+                        self.loading = false;
+
+                        self.error = response;
+                    });
                 }
-            })
-            .then(function(data) {
-                that.loading = false;
 
-                console.log("SUCCESS: ", data);
-            })
-            .catch(function(error) {
-                that.loading = false;
-
-                console.log("FAILURE: ", error);
-            });            
-        },
-        onJoystickMoveRotate: function(x_value, y_value) {
-        },
-        onJoystickMoveTranslate: function(x_value, y_value) {
+                set_state();
+            }
         }
     },
-    created() {
+    methods: {
+        onJoystickMoveRotate: function(x_value, y_value) {
+            this.x_value = x_value;
+        },
+        onJoystickMoveTranslate: function(x_value, y_value) {
+            this.y_value = y_value;
+        }
+    },
+    mounted() {
+        var self = this;
+
+        async function get_state() {
+            await fetch("http://0.0.0.0:8080/get_state", {
+                method: "GET",
+                headers: {
+                    "Content-Type": "text/plain; charset=UTF-8"
+                }
+            })
+            .then(function(response) {
+                return response.text();
+            })
+            .then(function(response) {
+                console.log("SUCCESS: " + response);
+    
+                self.state = response;
+            })
+            .catch(function(response) {
+                console.log("FAILURE: " + response);
+
+                self.error = response;
+            });
+        };
+
+        get_state();
     },
     template: `
         <v-app id="app">
             <v-container>
-                <v-row>
-                    <v-col>
-                    </v-col>
-                    <v-col cols="10">
-                        <v-row align-center justify-center>
-                            <v-col>
-                                <h1>Autonomous Surface Disinfection Robot</h1>
-                            </v-col>
-                        </v-row>
-                        <v-row align-center justify-center class="my-16">
-                            <v-col>
-                                <v-btn-toggle tile group color="deep-purple accent-3" v-model="state">
-                                    <v-btn value="Idle" @click="onClickState()">Idle</v-btn>
-                                    <v-btn value="Manual" @click="onClickState()">Manual</v-btn>
-                                    <v-btn value="Automatic" @click="onClickState()">Automatic</v-btn>
-                                </v-btn-toggle>
-                            </v-col>
-                        </v-row>
-                        <v-row align-center justify-center class="my-16">
-                            <v-col>
-                                <div v-if="loading === true">
-                                    <v-row>
-                                        <v-col>
-                                            <v-progress-circular color="deep-purple" :size="50" :width="5" indeterminate></v-progress-circular>
-                                        </v-col>
-                                    </v-row>
-                                </div>
-                                <div v-else-if="state === 'Idle'">
-                                </div>
-                                <div v-else-if="state === 'Manual'">
-                                    <v-row>
-                                        <v-col>
-                                            <Joystick ref="joystick_rotate" :width="200" :height="200" :x_max="1.0" :y_max="0.0" @joystickMove="onJoystickMoveRotate"></Joystick>
-                                        </v-col>
-                                        <v-col>
-                                            <Joystick ref="joystick_translate" :width="200" :height="200" :x_max="0.0" :y_max="1.0" @joystickMove="onJoystickMoveTranslate"></Joystick>
-                                        </v-col>
-                                    </v-row>
-                                </div>
-                                <div v-else-if="state === 'Automatic'">
-                                </div>
-                            </v-col>
-                        </v-row>
-                    </v-col>
-                    <v-col>
-                    </v-col>
-                </v-row>
+                <div v-if="error !== undefined">
+                    <v-row>
+                        <v-col>
+                            <h1>
+                                ASDR REST API returned the following error: 
+                            </h1>
+                        </v-col>
+                    </v-row>
+                    <v-row>
+                        <v-col>
+                            <h2>
+                                {{ error }}
+                            </h2>
+                        </v-col>
+                    </v-row>
+                </div>
+                <div v-else>
+                    <v-row>
+                        <v-col>
+                        </v-col>
+                        <v-col cols="10">
+                            <v-row>
+                                <v-col>
+                                    <h1>
+                                        Autonomous Surface Disinfection Robot
+                                    </h1>
+                                </v-col>
+                            </v-row>
+                            <v-row class="my-16">
+                                <v-col>
+                                    <v-btn-toggle tile group color="deep-purple accent-3" v-model="state">
+                                        <v-btn value="Idle">
+                                            Idle
+                                        </v-btn>
+                                        <v-btn value="Manual">
+                                            Manual
+                                        </v-btn>
+                                        <v-btn value="Automatic">
+                                            Automatic
+                                        </v-btn>
+                                    </v-btn-toggle>
+                                </v-col>
+                            </v-row>
+                            <v-row class="my-16">
+                                <v-col>
+                                    <div v-if="loading === true">
+                                        <v-row>
+                                            <v-col>
+                                                <v-progress-circular color="deep-purple" :size="50" :width="5" indeterminate>
+                                                </v-progress-circular>
+                                            </v-col>
+                                        </v-row>
+                                    </div>
+                                    <div v-else-if="state === 'Idle'">
+                                    </div>
+                                    <div v-else-if="state === 'Manual'">
+                                        <v-row>
+                                            <v-col>
+                                                <Joystick ref="joystick_rotate" :x_max="1.0" :y_max="0.0" @joystickMove="onJoystickMoveRotate">
+                                                </Joystick>
+                                            </v-col>
+                                            <v-col>
+                                                <Joystick ref="joystick_translate" :x_max="0.0" :y_max="1.0" @joystickMove="onJoystickMoveTranslate">
+                                                </Joystick>
+                                            </v-col>
+                                        </v-row>
+                                    </div>
+                                    <div v-else-if="state === 'Automatic'">
+                                    </div>
+                                </v-col>
+                            </v-row>
+                        </v-col>
+                        <v-col>
+                        </v-col>
+                    </v-row>
+                </div>
             </v-container>
         </v-app>
         `

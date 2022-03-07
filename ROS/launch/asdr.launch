@@ -2,7 +2,7 @@
     <arg name="usb_0" default="/dev/ttyUSB0"/>
     <arg name="usb_1" default="/dev/ttyUSB1"/>
     <arg name="usb_2" default="/dev/ttyUSB2"/>
-    <group ns="$(arg usb_0)">
+    <!--group ns="$(arg usb_0)">
         <node pkg="serial_command_client" type="serial_command_client_node" name="serial_command_client_node" output="screen">
             <param name="path_name" type="string" value="$(arg usb_0)"/>
         </node>
@@ -14,7 +14,7 @@
             <param name="world_frame" type="string" value="enu"/>
         </node>
         <node pkg="uvc_light" type="uvc_light_node" name="uvc_light_node"/>
-    </group>
+    </group-->
     <!--group ns="$(arg usb_1)">
         <node pkg="serial_command_client" type="serial_command_client_node" name="serial_command_client_node" output="screen">
             <param name="path_name" type="string" value="$(arg usb_1)"/>
@@ -49,8 +49,8 @@
             <param name="stepper_motor_id" type="int" value="1"/>
         </node>
     </group-->
-    <group ns="adr">
-        <node pkg="adr" type="adr_node" name="adr_node" output="screen"/>
+    <group ns="asdr">
+        <node pkg="asdr" type="asdr_node" name="asdr_node" output="screen"/>
         <node pkg="rest" type="rest_node" name="rest_node" output="screen"/>
         <node pkg="discovery" type="discovery_node" name="discovery_node" output="screen"/>
         <node pkg="coverage_path_planner" type="coverage_path_planner_node" name="coverage_path_planner_node" output="screen">

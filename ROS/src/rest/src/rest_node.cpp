@@ -4,8 +4,8 @@ RESTNode::RESTNode(ros::NodeHandle const &node_handle) :
     m_node_handle { node_handle }, 
     m_listener { "http://0.0.0.0:8080" }
 {   
-    m_get_state_client = m_node_handle.serviceClient<adr::get_state>(ros::names::resolve("get_state"));
-    m_set_state_client = m_node_handle.serviceClient<adr::set_state>(ros::names::resolve("set_state"));
+    m_get_state_client = m_node_handle.serviceClient<asdr::get_state>(ros::names::resolve("get_state"));
+    m_set_state_client = m_node_handle.serviceClient<asdr::set_state>(ros::names::resolve("set_state"));
 
     m_listener.support(web::http::methods::GET, std::bind(&RESTNode::onGet, this, std::placeholders::_1));
     m_listener.support(web::http::methods::POST, std::bind(&RESTNode::onPost, this, std::placeholders::_1));
@@ -20,47 +20,88 @@ RESTNode::~RESTNode()
 
 void RESTNode::onGet(web::http::http_request const &request)
 {
-    auto paths = web::uri::split_path(web::uri::decode(request.relative_uri().path()));
+    std::vector<utility::string_t> const paths = web::uri::split_path(web::uri::decode(request.relative_uri().path()));
 
     if (paths[0] == "get_state") {
-        adr::get_state get_state_srv;
+        asdr::get_state get_state_srv;
 
         if (m_get_state_client.call(get_state_srv)) {
-            auto response = web::json::value::object();
+            web::http::http_response response(web::http::status_codes::OK);
 
-            response["state"] = web::json::value::string(get_state_srv.response.state);
+            response.headers().add("Content-Type", "text/plain; charset=UTF-8");
+            response.headers().add("Access-Control-Allow-Origin", "*");
+            
+            response.set_body(get_state_srv.response.state, "text/plain; charset=UTF-8");
 
-            request.reply(web::http::status_codes::OK, response);
+            ROS_INFO("Response: %s", response.to_string().c_str());
+
+            request.reply(response);
+
         }
         else {
-            request.reply(web::http::status_codes::InternalError);
+            web::http::http_response response(web::http::status_codes::InternalError);
+
+            response.headers().add("Content-Type", "text/plain; charset=UTF-8");
+            response.headers().add("Access-Control-Allow-Origin", "*");
+            
+            request.reply(response);
         }
     }
     else {
-        request.reply(web::http::status_codes::BadRequest);
+        web::http::http_response response(web::http::status_codes::BadRequest);
+
+        response.headers().add("Content-Type", "text/plain; charset=UTF-8");
+        response.headers().add("Access-Control-Allow-Origin", "*");
+        
+        request.reply(response);
     }
 }
 
 void RESTNode::onPost(web::http::http_request const &request)
 {
-    auto paths = web::uri::split_path(web::uri::decode(request.relative_uri().path()));
+    std::vector<utility::string_t> const paths = web::uri::split_path(web::uri::decode(request.relative_uri().path()));
 
-    auto query = web::uri::split_query(web::uri::decode(request.request_uri().query()));
+    std::map<utility::string_t, utility::string_t> const query = web::uri::split_query(web::uri::decode(request.request_uri().query()));
 
     if (paths[0] == "set_state") {
-        adr::set_state set_state_srv;
+        asdr::set_state set_state_srv;
 
-        set_state_srv.request.state = query["state"];
+        try {
+            set_state_srv.request.state = query.at("state");
 
-        if (m_set_state_client.call(set_state_srv)) {
-            request.reply(web::http::status_codes::OK);
+            if (m_set_state_client.call(set_state_srv)) {
+                web::http::http_response response(web::http::status_codes::OK);
+
+                response.headers().add("Content-Type", "text/plain; charset=UTF-8");
+                response.headers().add("Access-Control-Allow-Origin", "*");
+                
+                request.reply(response);
+            }
+            else {
+                web::http::http_response response(web::http::status_codes::BadRequest);
+
+                response.headers().add("Content-Type", "text/plain; charset=UTF-8");
+                response.headers().add("Access-Control-Allow-Origin", "*");
+                
+                request.reply(response);
+            }
         }
-        else {
-            request.reply(web::http::status_codes::BadRequest);
+        catch (std::exception const &exception) {
+            web::http::http_response response(web::http::status_codes::BadRequest);
+
+            response.headers().add("Content-Type", "text/plain; charset=UTF-8");
+            response.headers().add("Access-Control-Allow-Origin", "*");
+            
+            request.reply(response);
         }
     }
     else {
-        request.reply(web::http::status_codes::BadRequest);
+        web::http::http_response response(web::http::status_codes::BadRequest);
+
+        response.headers().add("Content-Type", "text/plain; charset=UTF-8");
+        response.headers().add("Access-Control-Allow-Origin", "*");
+        
+        request.reply(response);
     }
 }
 

@@ -12,7 +12,7 @@ void Mandoline::Extrude::setDistance(float const &distance)
 
 void Mandoline::Extrude::compute(pcl::PointCloud<pcl::PointXYZ> &output)
 {
-    auto const &points = m_point_cloud->points;
+    std::vector<pcl::PointXYZ, Eigen::aligned_allocator<pcl::PointXYZ>> const &points = m_point_cloud->points;
 
     {
         pcl::PointXYZ const point = extrude({ points[std::size(points) - 1], points[0], points[1] });

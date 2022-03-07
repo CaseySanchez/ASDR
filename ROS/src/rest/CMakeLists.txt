@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.8)
 project(rest)
 
 ## Find catkin and any catkin packages
-find_package(catkin REQUIRED COMPONENTS roscpp rospy std_msgs genmsg adr)
+find_package(catkin REQUIRED COMPONENTS roscpp rospy std_msgs genmsg asdr)
 
 set(cpprestsdk_DIR /usr/lib/${CMAKE_LIBRARY_ARCHITECTURE}/cmake/)
 

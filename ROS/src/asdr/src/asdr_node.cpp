@@ -1,20 +1,20 @@
-#include "adr_node.hpp"
+#include "asdr_node.hpp"
 
-ADRNode::ADRNode(ros::NodeHandle const &node_handle) : 
+ASDRNode::ASDRNode(ros::NodeHandle const &node_handle) : 
     m_node_handle { node_handle }, 
     m_context { node_handle }, 
     m_finite_state_machine { m_context }
 {
-    m_get_state_server = m_node_handle.advertiseService(ros::names::resolve("get_state"), &ADRNode::onGetState, this);
-    m_set_state_server = m_node_handle.advertiseService(ros::names::resolve("set_state"), &ADRNode::onSetState, this);
+    m_get_state_server = m_node_handle.advertiseService(ros::names::resolve("get_state"), &ASDRNode::onGetState, this);
+    m_set_state_server = m_node_handle.advertiseService(ros::names::resolve("set_state"), &ASDRNode::onSetState, this);
 }
 
-void ADRNode::update()
+void ASDRNode::update()
 {
     m_finite_state_machine.update();
 }
 
-bool ADRNode::onGetState(adr::get_state::Request &request, adr::get_state::Response &response)
+bool ASDRNode::onGetState(asdr::get_state::Request &request, asdr::get_state::Response &response)
 {
     if (m_finite_state_machine.isActive<Idle>()) {
         response.state = "Idle";
@@ -81,7 +81,7 @@ bool ADRNode::onGetState(adr::get_state::Request &request, adr::get_state::Respo
     return false;
 }
 
-bool ADRNode::onSetState(adr::set_state::Request &request, adr::set_state::Response &response)
+bool ASDRNode::onSetState(asdr::set_state::Request &request, asdr::set_state::Response &response)
 {
     if (request.state == "Idle") {
         m_finite_state_machine.changeTo<Idle>();
@@ -105,14 +105,14 @@ bool ADRNode::onSetState(adr::set_state::Request &request, adr::set_state::Respo
 int main(int argc, char **argv)
 {
     try {
-        ros::init(argc, argv, "adr");
+        ros::init(argc, argv, "asdr");
 
         ros::NodeHandle node_handle("~");
 
-        ADRNode adr_node(node_handle);
+        ASDRNode asdr_node(node_handle);
         
         while (ros::ok()) {
-            adr_node.update();
+            asdr_node.update();
 
             ros::spinOnce();
         }

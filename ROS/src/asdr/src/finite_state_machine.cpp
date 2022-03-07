@@ -1,10 +1,10 @@
 #include "finite_state_machine.hpp"
 
-Context::Context(ros::NodeHandle const &node_handle) : m_node_handle(node_handle), m_move_base_client(new actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction>("move_base", true))
+Context::Context(ros::NodeHandle const &node_handle) : m_node_handle(node_handle)//, m_move_base_client(new actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction>("move_base", true))
 {
-    if (!m_move_base_client->waitForServer(ros::Duration(10.0))) {
+    /*if (!m_move_base_client->waitForServer(ros::Duration(10.0))) {
         throw std::runtime_error("Failed to load move_base action client.");
-    }
+    }*/
 }
 
 void Idle::enter(Control &control) noexcept 

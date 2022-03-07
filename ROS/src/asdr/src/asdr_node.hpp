@@ -6,12 +6,12 @@
 #include "ros/ros.h"
 #include "ros/console.h"
 
-#include "adr/set_state.h"
-#include "adr/get_state.h"
+#include "asdr/set_state.h"
+#include "asdr/get_state.h"
 
 #include "finite_state_machine.hpp"
 
-class ADRNode
+class ASDRNode
 {
     ros::NodeHandle m_node_handle;
     
@@ -23,11 +23,11 @@ class ADRNode
     ros::ServiceServer m_set_state_server;
 
 public:
-    ADRNode(ros::NodeHandle const &node_handle);
+    ASDRNode(ros::NodeHandle const &node_handle);
 
     void update();
 
 private:
-    bool onGetState(adr::get_state::Request &request, adr::get_state::Response &response);
-    bool onSetState(adr::set_state::Request &request, adr::set_state::Response &response);
+    bool onGetState(asdr::get_state::Request &request, asdr::get_state::Response &response);
+    bool onSetState(asdr::set_state::Request &request, asdr::set_state::Response &response);
 };

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <!--link rel="shortcut icon" href="favicon.ico" type="image/x-icon"-->
+    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
     <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
@@ -14,16 +14,19 @@
     <script type="module">
       import index from "./index.js"
 
-      const app = Vue.createApp(index);
+      try {
+        const app = Vue.createApp(index);
 
-      const vuetify = Vuetify.createVuetify({
-        ...Vuetify.components,
-        ...Vuetify.directives
-      });
+        const vuetify = Vuetify.createVuetify({
+          ...Vuetify.components,
+          ...Vuetify.directives
+        });
 
-      console.log(Vuetify);
-
-      app.use(vuetify).mount("#app");
+        app.use(vuetify).mount("#app");
+      }
+      catch (error) {
+        console.log("Error: " + error);
+      }
     </script>
   </body>
 </html>

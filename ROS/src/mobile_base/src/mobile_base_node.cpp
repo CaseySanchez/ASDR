@@ -1,66 +1,42 @@
 #include "mobile_base_node.hpp"
 
 MobileBaseNode::MobileBaseNode(ros::NodeHandle const &node_handle) : 
-    m_node_handle { node_handle }, 
-    m_pid { { { PID(0.1, 0.05, 0.01), PID(0.1, 0.05, 0.01) }, { PID(0.1, 0.05, 0.01), PID(0.1, 0.05, 0.01) } } } 
+    m_node_handle { node_handle },
+    m_pid { { { { { 0.1, 0.05, 0.01 }, { 0.1, 0.05, 0.01 } } }, { { { 0.1, 0.05, 0.01 }, { 0.1, 0.05, 0.01 } } } } },
+    m_position { { { 0.0, 0.0 }, { 0.0, 0.0 } } },
+    m_velocity { { { 0.0, 0.0 }, { 0.0, 0.0 } } },
+    m_effort { { { 0.0, 0.0 }, { 0.0, 0.0 } } },
+    m_command { { { 0.0, 0.0 }, { 0.0, 0.0 } } }
 {
     {
-        m_position[LEFT][FRONT] = 0.0;
-        m_velocity[LEFT][FRONT] = 0.0;
-        m_effort[LEFT][FRONT] = 0.0;
-        m_command[LEFT][FRONT] = 0.0;
-
         hardware_interface::JointStateHandle joint_state_handle("left_front", &m_position[LEFT][FRONT], &m_velocity[LEFT][FRONT], &m_effort[LEFT][FRONT]);
-
-        m_joint_state_interface.registerHandle(joint_state_handle);
-
         hardware_interface::JointHandle joint_velocity_handle(joint_state_handle, &m_command[LEFT][FRONT]);
 
+        m_joint_state_interface.registerHandle(joint_state_handle);
         m_joint_velocity_interface.registerHandle(joint_velocity_handle);
     }
 
     {
-        m_position[LEFT][BACK] = 0.0;
-        m_velocity[LEFT][BACK] = 0.0;
-        m_effort[LEFT][BACK] = 0.0;
-        m_command[LEFT][BACK] = 0.0;
-
         hardware_interface::JointStateHandle joint_state_handle("left_back", &m_position[LEFT][BACK], &m_velocity[LEFT][BACK], &m_effort[LEFT][BACK]);
-
-        m_joint_state_interface.registerHandle(joint_state_handle);
-
         hardware_interface::JointHandle joint_velocity_handle(joint_state_handle, &m_command[LEFT][BACK]);
 
+        m_joint_state_interface.registerHandle(joint_state_handle);
         m_joint_velocity_interface.registerHandle(joint_velocity_handle);
     }
 
     {
-        m_position[RIGHT][FRONT] = 0.0;
-        m_velocity[RIGHT][FRONT] = 0.0;
-        m_effort[RIGHT][FRONT] = 0.0;
-        m_command[RIGHT][FRONT] = 0.0;
-
         hardware_interface::JointStateHandle joint_state_handle("right_front", &m_position[RIGHT][FRONT], &m_velocity[RIGHT][FRONT], &m_effort[RIGHT][FRONT]);
-
-        m_joint_state_interface.registerHandle(joint_state_handle);
-
         hardware_interface::JointHandle joint_velocity_handle(joint_state_handle, &m_command[RIGHT][FRONT]);
 
+        m_joint_state_interface.registerHandle(joint_state_handle);
         m_joint_velocity_interface.registerHandle(joint_velocity_handle);
     }
 
     {
-        m_position[RIGHT][BACK] = 0.0;
-        m_velocity[RIGHT][BACK] = 0.0;
-        m_effort[RIGHT][BACK] = 0.0;
-        m_command[RIGHT][BACK] = 0.0;
-
         hardware_interface::JointStateHandle joint_state_handle("right_back", &m_position[RIGHT][BACK], &m_velocity[RIGHT][BACK], &m_effort[RIGHT][BACK]);
-
-        m_joint_state_interface.registerHandle(joint_state_handle);
-
         hardware_interface::JointHandle joint_velocity_handle(joint_state_handle, &m_command[RIGHT][BACK]);
 
+        m_joint_state_interface.registerHandle(joint_state_handle);
         m_joint_velocity_interface.registerHandle(joint_velocity_handle);
     }
 
@@ -76,43 +52,6 @@ MobileBaseNode::MobileBaseNode(ros::NodeHandle const &node_handle) :
     m_set_stepper_motor_client[LEFT][BACK] = m_node_handle.serviceClient<stepper_motor::set_stepper_motor>(ros::names::resolve("/dev/ttyUSB1/" + std::to_string(BACK) + "/set_stepper_motor"));
     m_set_stepper_motor_client[RIGHT][FRONT] = m_node_handle.serviceClient<stepper_motor::set_stepper_motor>(ros::names::resolve("/dev/ttyUSB2/" + std::to_string(FRONT) + "/set_stepper_motor"));
     m_set_stepper_motor_client[RIGHT][BACK] = m_node_handle.serviceClient<stepper_motor::set_stepper_motor>(ros::names::resolve("/dev/ttyUSB2/" + std::to_string(BACK) + "/set_stepper_motor"));
-}
-
-void MobileBaseNode::write(ros::Duration const &period) 
-{
-    stepper_motor::set_stepper_motor set_stepper_motor_srv;
-
-    {
-        set_stepper_motor_srv.request.velocity = static_cast<float>(m_pid[LEFT][FRONT].compute(m_command[LEFT][FRONT] - m_velocity[LEFT][FRONT], period.toSec()));
-
-        if (!m_set_stepper_motor_client[LEFT][FRONT].call(set_stepper_motor_srv)) {
-            throw std::runtime_error("Failed to set left-front stepper motor.");
-        }
-    }
-
-    {
-        set_stepper_motor_srv.request.velocity = static_cast<float>(m_pid[LEFT][BACK].compute(m_command[LEFT][BACK] - m_velocity[LEFT][BACK], period.toSec()));
-
-        if (!m_set_stepper_motor_client[LEFT][BACK].call(set_stepper_motor_srv)) {
-            throw std::runtime_error("Failed to set left-back stepper motor.");
-        }
-    }
-
-    {
-        set_stepper_motor_srv.request.velocity = static_cast<float>(m_pid[RIGHT][FRONT].compute(m_command[RIGHT][FRONT] - m_velocity[RIGHT][FRONT], period.toSec()));
-
-        if (!m_set_stepper_motor_client[RIGHT][FRONT].call(set_stepper_motor_srv)) {
-            throw std::runtime_error("Failed to set right-front stepper motor.");
-        }
-    }
-
-    {
-        set_stepper_motor_srv.request.velocity = static_cast<float>(m_pid[RIGHT][BACK].compute(m_command[RIGHT][BACK] - m_velocity[RIGHT][BACK], period.toSec()));
-
-        if (!m_set_stepper_motor_client[RIGHT][BACK].call(set_stepper_motor_srv)) {
-            throw std::runtime_error("Failed to set right-back stepper motor.");
-        }
-    }
 }
 
 void MobileBaseNode::read(ros::Duration const &period) 
@@ -156,6 +95,43 @@ void MobileBaseNode::read(ros::Duration const &period)
         else {
             m_position[RIGHT][BACK] = static_cast<double>(get_rotary_encoder_srv.response.position);
             m_velocity[RIGHT][BACK] = static_cast<double>(get_rotary_encoder_srv.response.velocity);
+        }
+    }
+}
+
+void MobileBaseNode::write(ros::Duration const &period) 
+{
+    stepper_motor::set_stepper_motor set_stepper_motor_srv;
+
+    {
+        set_stepper_motor_srv.request.velocity = static_cast<float>(m_pid[LEFT][FRONT].compute(m_command[LEFT][FRONT] - m_velocity[LEFT][FRONT], period.toSec()));
+
+        if (!m_set_stepper_motor_client[LEFT][FRONT].call(set_stepper_motor_srv)) {
+            throw std::runtime_error("Failed to set left-front stepper motor.");
+        }
+    }
+
+    {
+        set_stepper_motor_srv.request.velocity = static_cast<float>(m_pid[LEFT][BACK].compute(m_command[LEFT][BACK] - m_velocity[LEFT][BACK], period.toSec()));
+
+        if (!m_set_stepper_motor_client[LEFT][BACK].call(set_stepper_motor_srv)) {
+            throw std::runtime_error("Failed to set left-back stepper motor.");
+        }
+    }
+
+    {
+        set_stepper_motor_srv.request.velocity = static_cast<float>(m_pid[RIGHT][FRONT].compute(m_command[RIGHT][FRONT] - m_velocity[RIGHT][FRONT], period.toSec()));
+
+        if (!m_set_stepper_motor_client[RIGHT][FRONT].call(set_stepper_motor_srv)) {
+            throw std::runtime_error("Failed to set right-front stepper motor.");
+        }
+    }
+
+    {
+        set_stepper_motor_srv.request.velocity = static_cast<float>(m_pid[RIGHT][BACK].compute(m_command[RIGHT][BACK] - m_velocity[RIGHT][BACK], period.toSec()));
+
+        if (!m_set_stepper_motor_client[RIGHT][BACK].call(set_stepper_motor_srv)) {
+            throw std::runtime_error("Failed to set right-back stepper motor.");
         }
     }
 }
