@@ -8,7 +8,7 @@ find_package(catkin REQUIRED COMPONENTS roscpp rospy std_msgs genmsg actionlib m
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 
-add_service_files(FILES get_state.srv set_state.srv)
+add_service_files(FILES get_state.srv set_state.srv set_velocity.srv)
 
 ## Generate added messages and services
 generate_messages(DEPENDENCIES std_msgs)

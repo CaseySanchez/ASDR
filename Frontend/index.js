@@ -10,16 +10,20 @@ export default {
             error: undefined,
             state: undefined,
             loading: false,
-            x_value: 0.0,
-            y_value: 0.0
+            linear: 0.0,
+            angular: 0.0,
+            interval_id: undefined
         };
     },
     watch: {
+        error: function(new_value, old_value) {
+            this.stopInterval();
+        },
         state: function(new_value, old_value) {
-            if (new_value !== undefined && old_value !== undefined) {
+            if (new_value !== undefined && old_value !== undefined && new_value !== old_value) {
                 var self = this;
 
-                async function set_state() {
+                async function setState() {
                     self.loading = true;
 
                     var query = new URLSearchParams({
@@ -46,16 +50,57 @@ export default {
                     });
                 }
 
-                set_state();
+                setState();
+
+                if (new_value === "Manual") {
+                    self.startInterval();
+                }
+                else if (old_value === "Manual") {
+                    self.stopInterval();
+                }
             }
         }
     },
     methods: {
+        startInterval: function() {
+            var self = this;
+
+            function setVelocity() {
+                var query = new URLSearchParams({
+                    linear: self.linear,
+                    angular: self.angular
+                });
+
+                fetch("http://0.0.0.0:8080/set_velocity?" + query.toString(), {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "text/plain; charset=UTF-8"
+                    }
+                })
+                .then(function(response) {
+                    console.log("SUCCESS: " + response);
+                })
+                .catch(function(response) {
+                    console.log("FAILURE: " + response);
+
+                    self.error = response;
+                });
+            }
+
+            this.interval_id = setInterval(setVelocity, 100);
+        },
+        stopInterval: function() {
+            if (this.interval_id !== undefined) {
+                clearInterval(this.interval_id);
+
+                this.interval_id = undefined;
+            }
+        },
         onJoystickMoveRotate: function(x_value, y_value) {
-            this.x_value = x_value;
+            this.angular = x_value;
         },
         onJoystickMoveTranslate: function(x_value, y_value) {
-            this.y_value = y_value;
+            this.linear = y_value;
         }
     },
     mounted() {

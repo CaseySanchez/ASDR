@@ -6,6 +6,7 @@ RESTNode::RESTNode(ros::NodeHandle const &node_handle) :
 {   
     m_get_state_client = m_node_handle.serviceClient<asdr::get_state>(ros::names::resolve("get_state"));
     m_set_state_client = m_node_handle.serviceClient<asdr::set_state>(ros::names::resolve("set_state"));
+    m_set_velocity_client = m_node_handle.serviceClient<asdr::set_velocity>(ros::names::resolve("set_velocity"));
 
     m_listener.support(web::http::methods::GET, std::bind(&RESTNode::onGet, this, std::placeholders::_1));
     m_listener.support(web::http::methods::POST, std::bind(&RESTNode::onPost, this, std::placeholders::_1));
@@ -70,6 +71,39 @@ void RESTNode::onPost(web::http::http_request const &request)
             set_state_srv.request.state = query.at("state");
 
             if (m_set_state_client.call(set_state_srv)) {
+                web::http::http_response response(web::http::status_codes::OK);
+
+                response.headers().add("Content-Type", "text/plain; charset=UTF-8");
+                response.headers().add("Access-Control-Allow-Origin", "*");
+                
+                request.reply(response);
+            }
+            else {
+                web::http::http_response response(web::http::status_codes::BadRequest);
+
+                response.headers().add("Content-Type", "text/plain; charset=UTF-8");
+                response.headers().add("Access-Control-Allow-Origin", "*");
+                
+                request.reply(response);
+            }
+        }
+        catch (std::exception const &exception) {
+            web::http::http_response response(web::http::status_codes::BadRequest);
+
+            response.headers().add("Content-Type", "text/plain; charset=UTF-8");
+            response.headers().add("Access-Control-Allow-Origin", "*");
+            
+            request.reply(response);
+        }
+    }
+    else if (paths[0] == "set_velocity") {
+        asdr::set_velocity set_velocity_srv;
+
+        try {
+            set_velocity_srv.request.linear = std::stod(query.at("linear"));
+            set_velocity_srv.request.angular = std::stod(query.at("angular"));
+
+            if (m_set_velocity_client.call(set_velocity_srv)) {
                 web::http::http_response response(web::http::status_codes::OK);
 
                 response.headers().add("Content-Type", "text/plain; charset=UTF-8");

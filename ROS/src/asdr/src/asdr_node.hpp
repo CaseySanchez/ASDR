@@ -8,6 +8,7 @@
 
 #include "asdr/set_state.h"
 #include "asdr/get_state.h"
+#include "asdr/set_velocity.h"
 
 #include "finite_state_machine.hpp"
 
@@ -21,6 +22,7 @@ class ASDRNode
 
     ros::ServiceServer m_get_state_server;
     ros::ServiceServer m_set_state_server;
+    ros::ServiceServer m_set_velocity_server;
 
 public:
     ASDRNode(ros::NodeHandle const &node_handle);
@@ -30,4 +32,5 @@ public:
 private:
     bool onGetState(asdr::get_state::Request &request, asdr::get_state::Response &response);
     bool onSetState(asdr::set_state::Request &request, asdr::set_state::Response &response);
+    bool onSetVelocity(asdr::set_velocity::Request &request, asdr::set_velocity::Response &response);
 };

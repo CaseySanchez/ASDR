@@ -8,6 +8,7 @@
 
 #include "asdr/set_state.h"
 #include "asdr/get_state.h"
+#include "asdr/set_velocity.h"
 
 #include "cpprest/asyncrt_utils.h"
 #include "cpprest/http_listener.h"
@@ -22,6 +23,7 @@ class RESTNode
 
     ros::ServiceClient m_get_state_client;
     ros::ServiceClient m_set_state_client;
+    ros::ServiceClient m_set_velocity_client;
 
 public:
     RESTNode(ros::NodeHandle const &node_handle);

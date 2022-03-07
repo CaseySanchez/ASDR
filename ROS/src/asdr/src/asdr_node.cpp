@@ -7,6 +7,7 @@ ASDRNode::ASDRNode(ros::NodeHandle const &node_handle) :
 {
     m_get_state_server = m_node_handle.advertiseService(ros::names::resolve("get_state"), &ASDRNode::onGetState, this);
     m_set_state_server = m_node_handle.advertiseService(ros::names::resolve("set_state"), &ASDRNode::onSetState, this);
+    m_set_velocity_server = m_node_handle.advertiseService(ros::names::resolve("set_velocity"), &ASDRNode::onSetVelocity, this);
 }
 
 void ASDRNode::update()
@@ -96,6 +97,15 @@ bool ASDRNode::onSetState(asdr::set_state::Request &request, asdr::set_state::Re
     else if (request.state == "Automatic") {
         m_finite_state_machine.changeTo<Automatic>();
 
+        return true;
+    }
+    
+    return false;
+}
+
+bool ASDRNode::onSetVelocity(asdr::set_velocity::Request &request, asdr::set_velocity::Response &response)
+{
+    if (m_finite_state_machine.isActive<Manual>()) {
         return true;
     }
     
