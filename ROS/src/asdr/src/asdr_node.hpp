@@ -6,6 +6,8 @@
 #include "ros/ros.h"
 #include "ros/console.h"
 
+#include "geometry_msgs/Twist.h"
+
 #include "asdr/set_state.h"
 #include "asdr/get_state.h"
 #include "asdr/set_velocity.h"
@@ -23,6 +25,8 @@ class ASDRNode
     ros::ServiceServer m_get_state_server;
     ros::ServiceServer m_set_state_server;
     ros::ServiceServer m_set_velocity_server;
+
+    ros::Publisher m_cmd_vel_publisher;
 
 public:
     ASDRNode(ros::NodeHandle const &node_handle);

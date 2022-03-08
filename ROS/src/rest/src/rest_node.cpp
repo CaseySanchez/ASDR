@@ -32,9 +32,7 @@ void RESTNode::onGet(web::http::http_request const &request)
             response.headers().add("Content-Type", "text/plain; charset=UTF-8");
             response.headers().add("Access-Control-Allow-Origin", "*");
             
-            response.set_body(get_state_srv.response.state, "text/plain; charset=UTF-8");
-
-            ROS_INFO("Response: %s", response.to_string().c_str());
+            response.set_body(get_state_srv.response.state);
 
             request.reply(response);
 

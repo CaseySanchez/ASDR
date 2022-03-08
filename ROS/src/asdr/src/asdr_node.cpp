@@ -8,6 +8,8 @@ ASDRNode::ASDRNode(ros::NodeHandle const &node_handle) :
     m_get_state_server = m_node_handle.advertiseService(ros::names::resolve("get_state"), &ASDRNode::onGetState, this);
     m_set_state_server = m_node_handle.advertiseService(ros::names::resolve("set_state"), &ASDRNode::onSetState, this);
     m_set_velocity_server = m_node_handle.advertiseService(ros::names::resolve("set_velocity"), &ASDRNode::onSetVelocity, this);
+
+    m_cmd_vel_publisher = m_node_handle.advertise<geometry_msgs::Twist>(ros::names::resolve("cmd_vel"), 100);
 }
 
 void ASDRNode::update()
@@ -106,6 +108,18 @@ bool ASDRNode::onSetState(asdr::set_state::Request &request, asdr::set_state::Re
 bool ASDRNode::onSetVelocity(asdr::set_velocity::Request &request, asdr::set_velocity::Response &response)
 {
     if (m_finite_state_machine.isActive<Manual>()) {
+        geometry_msgs::Twist cmd_vel_msg;
+
+        cmd_vel_msg.linear.x = request.linear;
+        cmd_vel_msg.linear.y = 0.0;
+        cmd_vel_msg.linear.z = 0.0;
+
+        cmd_vel_msg.angular.x = 0.0;
+        cmd_vel_msg.angular.y = 0.0;
+        cmd_vel_msg.angular.z = request.angular;
+
+        m_cmd_vel_publisher.publish(cmd_vel_msg);
+
         return true;
     }
     

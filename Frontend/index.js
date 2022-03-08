@@ -21,6 +21,13 @@ export default {
         },
         state: function(new_value, old_value) {
             if (new_value !== undefined && old_value !== undefined && new_value !== old_value) {
+                if (new_value === "Manual") {
+                    this.startInterval();
+                }
+                else if (old_value === "Manual") {
+                    this.stopInterval();
+                }
+
                 var self = this;
 
                 async function setState() {
@@ -51,13 +58,6 @@ export default {
                 }
 
                 setState();
-
-                if (new_value === "Manual") {
-                    self.startInterval();
-                }
-                else if (old_value === "Manual") {
-                    self.stopInterval();
-                }
             }
         }
     },
@@ -96,17 +96,17 @@ export default {
                 this.interval_id = undefined;
             }
         },
-        onJoystickMoveRotate: function(x_value, y_value) {
+        onJoystickMoveAngular: function(x_value, y_value) {
             this.angular = x_value;
         },
-        onJoystickMoveTranslate: function(x_value, y_value) {
+        onJoystickMoveLinear: function(x_value, y_value) {
             this.linear = y_value;
         }
     },
     mounted() {
         var self = this;
 
-        async function get_state() {
+        async function getState() {
             await fetch("http://0.0.0.0:8080/get_state", {
                 method: "GET",
                 headers: {
@@ -128,7 +128,7 @@ export default {
             });
         };
 
-        get_state();
+        getState();
     },
     template: `
         <v-app id="app">
@@ -191,11 +191,11 @@ export default {
                                     <div v-else-if="state === 'Manual'">
                                         <v-row>
                                             <v-col>
-                                                <Joystick ref="joystick_rotate" :x_max="1.0" :y_max="0.0" @joystickMove="onJoystickMoveRotate">
+                                                <Joystick ref="joystick_angular" :x_max="1.0" :y_max="0.0" @joystickMove="onJoystickMoveAngular">
                                                 </Joystick>
                                             </v-col>
                                             <v-col>
-                                                <Joystick ref="joystick_translate" :x_max="0.0" :y_max="1.0" @joystickMove="onJoystickMoveTranslate">
+                                                <Joystick ref="joystick_linear" :x_max="0.0" :y_max="1.0" @joystickMove="onJoystickMoveLinear">
                                                 </Joystick>
                                             </v-col>
                                         </v-row>
