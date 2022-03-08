@@ -5,6 +5,22 @@ ASDRNode::ASDRNode(ros::NodeHandle const &node_handle) :
     m_context { node_handle }, 
     m_finite_state_machine { m_context }
 {
+    if (!m_node_handle.getParam("max_linear_velocity", m_max_linear_velocity)) {
+        throw std::runtime_error("max_linear_velocity not provided");
+    }
+    
+    if (!m_node_handle.getParam("min_linear_velocity", m_min_linear_velocity)) {
+        throw std::runtime_error("min_linear_velocity not provided");
+    }
+
+    if (!m_node_handle.getParam("max_angular_velocity", m_max_angular_velocity)) {
+        throw std::runtime_error("max_angular_velocity not provided");
+    }
+    
+    if (!m_node_handle.getParam("min_angular_velocity", m_min_angular_velocity)) {
+        throw std::runtime_error("min_angular_velocity not provided");
+    }
+
     m_get_state_server = m_node_handle.advertiseService(ros::names::resolve("get_state"), &ASDRNode::onGetState, this);
     m_set_state_server = m_node_handle.advertiseService(ros::names::resolve("set_state"), &ASDRNode::onSetState, this);
     m_set_velocity_server = m_node_handle.advertiseService(ros::names::resolve("set_velocity"), &ASDRNode::onSetVelocity, this);
@@ -31,45 +47,45 @@ bool ASDRNode::onGetState(asdr::get_state::Request &request, asdr::get_state::Re
     }
     else if (m_finite_state_machine.isActive<Automatic>()) {
         if (m_finite_state_machine.isActive<Delay>()) {
-            response.state = "Delay"; 
+            response.state = "Automatic::Delay"; 
 
             return true;
         }
         else if (m_finite_state_machine.isActive<Map>()) {
             if (m_finite_state_machine.isActive<Observe>()) {
-                response.state = "Observe";
+                response.state = "Automatic::Map::Observe";
 
                 return true;
             }
             else if (m_finite_state_machine.isActive<Explore>()) {
-                response.state = "Explore";
+                response.state = "Automatic::Map::Explore";
 
                 return true;
             }
             else {
-                response.state = "Map";
+                response.state = "Automatic::Map";
 
                 return true;
             }
         }
         else if (m_finite_state_machine.isActive<Disinfect>()) {
             if (m_finite_state_machine.isActive<LightOn>()) {
-                response.state = "LightOn";
+                response.state = "Automatic::Disinfect::LightOn";
 
                 return true;
             }
             else if (m_finite_state_machine.isActive<Navigate>()) {
-                response.state = "Navigate";
+                response.state = "Automatic::Disinfect::Navigate";
 
                 return true;
             }
             else if (m_finite_state_machine.isActive<LightOff>()) {
-                response.state = "LightOff";
+                response.state = "Automatic::Disinfect::LightOff";
 
                 return true;
             }
             else {
-                response.state = "Disinfect";
+                response.state = "Automatic::Disinfect";
 
                 return true;
             }
@@ -110,13 +126,13 @@ bool ASDRNode::onSetVelocity(asdr::set_velocity::Request &request, asdr::set_vel
     if (m_finite_state_machine.isActive<Manual>()) {
         geometry_msgs::Twist cmd_vel_msg;
 
-        cmd_vel_msg.linear.x = request.linear;
+        cmd_vel_msg.linear.x = (request.linear + 1.0) * 0.5 * (m_max_linear_velocity - m_min_linear_velocity) + m_min_linear_velocity;
         cmd_vel_msg.linear.y = 0.0;
         cmd_vel_msg.linear.z = 0.0;
 
         cmd_vel_msg.angular.x = 0.0;
         cmd_vel_msg.angular.y = 0.0;
-        cmd_vel_msg.angular.z = request.angular;
+        cmd_vel_msg.angular.z = (request.angular + 1.0) * 0.5 * (m_max_angular_velocity - m_min_angular_velocity) + m_min_angular_velocity;
 
         m_cmd_vel_publisher.publish(cmd_vel_msg);
 

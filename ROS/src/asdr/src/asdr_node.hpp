@@ -28,6 +28,12 @@ class ASDRNode
 
     ros::Publisher m_cmd_vel_publisher;
 
+    double m_max_linear_velocity;
+    double m_min_linear_velocity;
+
+    double m_max_angular_velocity;
+    double m_min_angular_velocity;
+
 public:
     ASDRNode(ros::NodeHandle const &node_handle);
 
