@@ -36,9 +36,6 @@ struct Map;
 struct Observe;
 struct Explore;
 struct Disinfect;
-struct LightOn;
-struct Navigate;
-struct LightOff;
 
 using Machine = hfsm2::MachineT<hfsm2::Config::ContextT<Context>>;
 using FiniteStateMachine = Machine::PeerRoot<
@@ -50,11 +47,7 @@ using FiniteStateMachine = Machine::PeerRoot<
                         Observe,
                         Explore
                     >,
-                    Machine::Composite<Disinfect,
-                        LightOn,
-                        Navigate,
-                        LightOff
-                    >
+                    Disinfect
                 >
             >;
 
@@ -125,42 +118,15 @@ struct Explore : public FiniteStateMachine::State
 struct Disinfect : public FiniteStateMachine::State
 {
     ros::ServiceClient m_set_mode_localization_client;
-
-	void entryGuard(GuardControl &control) noexcept;
-    void enter(Control &control) noexcept;
-    void exit(Control &control) noexcept;
-};
-
-struct LightOn : public FiniteStateMachine::State
-{
     ros::ServiceClient m_set_uvc_light_client;
-
-	void entryGuard(GuardControl &control) noexcept;
-    void enter(Control &control) noexcept;
-	void update(FullControl &control) noexcept;
-    void exit(Control &control) noexcept;
-};
-
-struct Navigate : public FiniteStateMachine::State
-{
     ros::ServiceClient m_make_plan_client;
 
     std::vector<geometry_msgs::Pose> m_plan;
-
     std::vector<geometry_msgs::Pose>::const_iterator m_plan_iterator;
 
 	void entryGuard(GuardControl &control) noexcept;
     void enter(Control &control) noexcept;
 	void update(FullControl &control) noexcept;
-    void exit(Control &control) noexcept;
-};
-
-struct LightOff : public FiniteStateMachine::State
-{
-    ros::ServiceClient m_set_uvc_light_client;
-
-	void entryGuard(GuardControl &control) noexcept;
-    void enter(Control &control) noexcept;
-	void update(FullControl &control) noexcept;
+    void exitGuard(GuardControl &control) noexcept;
     void exit(Control &control) noexcept;
 };

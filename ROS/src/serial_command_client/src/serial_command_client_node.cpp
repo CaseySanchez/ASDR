@@ -6,7 +6,7 @@ SerialCommandClientNode::SerialCommandClientNode(ros::NodeHandle const &node_han
     std::string path_name;
 
     if (!m_node_handle.getParam("path_name", path_name)) {
-        throw std::runtime_error("path_name not provided");
+        throw std::runtime_error("path_name not provided.");
     }
 
     m_serial_command_client.open(path_name);

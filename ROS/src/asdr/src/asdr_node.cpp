@@ -6,19 +6,19 @@ ASDRNode::ASDRNode(ros::NodeHandle const &node_handle) :
     m_finite_state_machine { m_context }
 {
     if (!m_node_handle.getParam("max_linear_velocity", m_max_linear_velocity)) {
-        throw std::runtime_error("max_linear_velocity not provided");
+        throw std::runtime_error("max_linear_velocity not provided.");
     }
     
     if (!m_node_handle.getParam("min_linear_velocity", m_min_linear_velocity)) {
-        throw std::runtime_error("min_linear_velocity not provided");
+        throw std::runtime_error("min_linear_velocity not provided.");
     }
 
     if (!m_node_handle.getParam("max_angular_velocity", m_max_angular_velocity)) {
-        throw std::runtime_error("max_angular_velocity not provided");
+        throw std::runtime_error("max_angular_velocity not provided.");
     }
     
     if (!m_node_handle.getParam("min_angular_velocity", m_min_angular_velocity)) {
-        throw std::runtime_error("min_angular_velocity not provided");
+        throw std::runtime_error("min_angular_velocity not provided.");
     }
 
     m_get_state_server = m_node_handle.advertiseService(ros::names::resolve("get_state"), &ASDRNode::onGetState, this);
@@ -69,26 +69,9 @@ bool ASDRNode::onGetState(asdr::get_state::Request &request, asdr::get_state::Re
             }
         }
         else if (m_finite_state_machine.isActive<Disinfect>()) {
-            if (m_finite_state_machine.isActive<LightOn>()) {
-                response.state = "Automatic::Disinfect::LightOn";
+            response.state = "Automatic::Disinfect";
 
-                return true;
-            }
-            else if (m_finite_state_machine.isActive<Navigate>()) {
-                response.state = "Automatic::Disinfect::Navigate";
-
-                return true;
-            }
-            else if (m_finite_state_machine.isActive<LightOff>()) {
-                response.state = "Automatic::Disinfect::LightOff";
-
-                return true;
-            }
-            else {
-                response.state = "Automatic::Disinfect";
-
-                return true;
-            }
+            return true;
         }
         else {
             response.state = "Automatic"; 

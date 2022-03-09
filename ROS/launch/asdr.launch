@@ -50,7 +50,13 @@
         </node>
     </group-->
     <group ns="asdr">
-        <node pkg="asdr" type="asdr_node" name="asdr_node" output="screen"/>
+        <rosparam command="load" file="config/mobile_base_controller.yaml"/>
+        <node pkg="asdr" type="asdr_node" name="asdr_node" output="screen">
+            <param name="max_linear_velocity" type="double" value="0.15"/>
+            <param name="min_linear_velocity" type="double" value="-0.15"/>
+            <param name="max_angular_velocity" type="double" value="0.5"/>
+            <param name="min_angular_velocity" type="double" value="-0.5"/>
+        </node>
         <node pkg="rest" type="rest_node" name="rest_node" output="screen"/>
         <node pkg="discovery" type="discovery_node" name="discovery_node" output="screen"/>
         <node pkg="coverage_path_planner" type="coverage_path_planner_node" name="coverage_path_planner_node" output="screen">

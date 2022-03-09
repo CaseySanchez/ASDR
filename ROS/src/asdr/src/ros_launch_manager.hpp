@@ -79,7 +79,7 @@ public:
 			return pid;
 		}
 		else {
-			throw std::runtime_error("ROSLaunchManager::start - No arguments provided");
+			throw std::runtime_error("ROSLaunchManager::start - No arguments provided.");
 		}
 	}
 
@@ -95,7 +95,7 @@ public:
 			ROS_INFO("Stopping process with PID %d and signal %d", pid, signal);
 		}
 		else {
-			throw std::runtime_error("ROSLaunchManager::stop - PID " + std::to_string(pid) + " not found");
+			throw std::runtime_error("ROSLaunchManager::stop - PID " + std::to_string(pid) + " not found.");
 		}
 	}
 

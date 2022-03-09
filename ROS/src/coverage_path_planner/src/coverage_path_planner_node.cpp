@@ -4,11 +4,11 @@ CoveragePathPlannerNode::CoveragePathPlannerNode(ros::NodeHandle const &node_han
     m_node_handle { node_handle }
 {
     if (!m_node_handle.getParam("extrude_distance", m_extrude_distance)) {
-        throw std::runtime_error("extrude_distance not provided");
+        throw std::runtime_error("extrude_distance not provided.");
     }
 
     if (!m_node_handle.getParam("slice_spacing", m_slice_spacing)) {
-        throw std::runtime_error("slice_spacing not provided");
+        throw std::runtime_error("slice_spacing not provided.");
     }
 
     m_occupancy_grid_subscriber = m_node_handle.subscribe(ros::names::resolve("/rtabmap/grid_map"), 1, &CoveragePathPlannerNode::onOccupancyGrid, this);
