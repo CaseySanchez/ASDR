@@ -17,8 +17,6 @@
 class ASDRNode
 {
     ros::NodeHandle m_node_handle;
-    
-	Context m_context;
 
 	FiniteStateMachine::Instance m_finite_state_machine;
 

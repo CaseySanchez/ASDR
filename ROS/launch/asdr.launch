@@ -1,10 +1,32 @@
 <launch>
-    <arg name="usb_0" default="/dev/ttyUSB0"/>
-    <arg name="usb_1" default="/dev/ttyUSB1"/>
-    <arg name="usb_2" default="/dev/ttyUSB2"/>
-    <!--group ns="$(arg usb_0)">
+    <!--arg name="serial_port" default="/dev/ttyUSB0"/>
+    <group ns="$(arg serial_port)">
         <node pkg="serial_command_client" type="serial_command_client_node" name="serial_command_client_node" output="screen">
-            <param name="path_name" type="string" value="$(arg usb_0)"/>
+            <param name="path_name" type="string" value="$(arg serial_port)"/>
+        </node>
+        <node pkg="rotary_encoder" type="rotary_encoder_node" name="rotary_encoder_node_0" output="screen">
+            <param name="rotary_encoder_id" type="int" value="0"/>
+        </node>
+        <node pkg="rotary_encoder" type="rotary_encoder_node" name="rotary_encoder_node_1" output="screen">
+            <param name="rotary_encoder_id" type="int" value="1"/>
+        </node>
+        <node pkg="rotary_encoder" type="rotary_encoder_node" name="rotary_encoder_node_2" output="screen">
+            <param name="rotary_encoder_id" type="int" value="2"/>
+        </node>
+        <node pkg="rotary_encoder" type="rotary_encoder_node" name="rotary_encoder_node_3" output="screen">
+            <param name="rotary_encoder_id" type="int" value="3"/>
+        </node>
+        <node pkg="stepper_motor" type="stepper_motor_node" name="stepper_motor_node_0" output="screen">
+            <param name="stepper_motor_id" type="int" value="0"/>
+        </node>
+        <node pkg="stepper_motor" type="stepper_motor_node" name="stepper_motor_node_1" output="screen">
+            <param name="stepper_motor_id" type="int" value="1"/>
+        </node>
+        <node pkg="stepper_motor" type="stepper_motor_node" name="stepper_motor_node_2" output="screen">
+            <param name="stepper_motor_id" type="int" value="2"/>
+        </node>
+        <node pkg="stepper_motor" type="stepper_motor_node" name="stepper_motor_node_3" output="screen">
+            <param name="stepper_motor_id" type="int" value="3"/>
         </node>
         <node pkg="berry_imu" type="berry_imu_node" name="berry_imu_node" output="screen"/>
         <node pkg="imu_filter_madgwick" type="imu_filter_node" name="imu_filter_node">
@@ -15,9 +37,26 @@
         </node>
         <node pkg="uvc_light" type="uvc_light_node" name="uvc_light_node"/>
     </group-->
-    <!--group ns="$(arg usb_1)">
+
+    <arg name="serial_port_0" default="/dev/ttyUSB0"/>
+    <arg name="serial_port_1" default="/dev/ttyUSB1"/>
+    <arg name="serial_port_2" default="/dev/ttyUSB2"/>
+    <!--group ns="$(arg serial_port_0)">
         <node pkg="serial_command_client" type="serial_command_client_node" name="serial_command_client_node" output="screen">
-            <param name="path_name" type="string" value="$(arg usb_1)"/>
+            <param name="path_name" type="string" value="$(arg serial_port_0)"/>
+        </node>
+        <node pkg="berry_imu" type="berry_imu_node" name="berry_imu_node" output="screen"/>
+        <node pkg="imu_filter_madgwick" type="imu_filter_node" name="imu_filter_node">
+            <param name="use_magnetic_field_msg" type="bool" value="true"/>
+            <param name="use_mag" type="bool" value="true"/>
+            <param name="publish_tf" type="bool" value="false"/>
+            <param name="world_frame" type="string" value="enu"/>
+        </node>
+        <node pkg="uvc_light" type="uvc_light_node" name="uvc_light_node"/>
+    </group-->
+    <!--group ns="$(arg serial_port_1)">
+        <node pkg="serial_command_client" type="serial_command_client_node" name="serial_command_client_node" output="screen">
+            <param name="path_name" type="string" value="$(arg serial_port_1)"/>
         </node>
         <node pkg="rotary_encoder" type="rotary_encoder_node" name="rotary_encoder_node" output="screen">
             <param name="rotary_encoder_id" type="int" value="0"/>
@@ -32,9 +71,9 @@
             <param name="stepper_motor_id" type="int" value="1"/>
         </node>
     </group>
-    <group ns="$(arg usb_2)">
+    <group ns="$(arg serial_port_2)">
         <node pkg="serial_command_client" type="serial_command_client_node" name="serial_command_client_node" output="screen">
-            <param name="path_name" type="string" value="$(arg usb_2)"/>
+            <param name="path_name" type="string" value="$(arg serial_port_2)"/>
         </node>
         <node pkg="rotary_encoder" type="rotary_encoder_node" name="rotary_encoder_node" output="screen">
             <param name="rotary_encoder_id" type="int" value="0"/>
@@ -51,12 +90,9 @@
     </group-->
     <group ns="asdr">
         <rosparam command="load" file="config/mobile_base_controller.yaml"/>
-        <node pkg="asdr" type="asdr_node" name="asdr_node" output="screen">
-            <param name="max_linear_velocity" type="double" value="0.15"/>
-            <param name="min_linear_velocity" type="double" value="-0.15"/>
-            <param name="max_angular_velocity" type="double" value="0.5"/>
-            <param name="min_angular_velocity" type="double" value="-0.5"/>
-        </node>
+        <!--node pkg="mobile_base" type="mobile_base_node" name="mobile_base_node"/>
+        <node pkg="controller_manager" type="spawner" name="controller_manager_node" respawn="false" output="screen" args="mobile_base_controller"/-->
+        <node pkg="asdr" type="asdr_node" name="asdr_node" output="screen"/>
         <node pkg="rest" type="rest_node" name="rest_node" output="screen"/>
         <node pkg="discovery" type="discovery_node" name="discovery_node" output="screen"/>
         <node pkg="coverage_path_planner" type="coverage_path_planner_node" name="coverage_path_planner_node" output="screen">

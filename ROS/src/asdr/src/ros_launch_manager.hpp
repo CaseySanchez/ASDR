@@ -71,7 +71,7 @@ public:
 
 				std::string const args_string = std::accumulate(std::next(std::cbegin(args_vector)), std::cend(args_vector), args_vector[0], [](std::string const &lhs, std::string const &rhs) -> std::string { return lhs + " " + rhs; });
 
-				ROS_INFO("Starting \"roslaunch %s\" with PID %d", args_string.c_str(), pid);
+				ROS_INFO_STREAM("Starting \"roslaunch " << args_string.c_str() << "\" with PID " << pid << ".");
 
 				m_pids.push_back(pid);
 			}
@@ -92,7 +92,7 @@ public:
 		if (pid_it != std::cend(m_pids)) {
 			::kill(pid, signal);
 
-			ROS_INFO("Stopping process with PID %d and signal %d", pid, signal);
+			ROS_INFO_STREAM("Stopping process with PID " << pid << " and signal " << signal << ".");
 		}
 		else {
 			throw std::runtime_error("ROSLaunchManager::stop - PID " + std::to_string(pid) + " not found.");
@@ -112,7 +112,7 @@ private:
 
 				if (::waitpid(pid, &status, WUNTRACED | WCONTINUED | WNOHANG) == pid) {
 					if (WIFEXITED(status)) {
-						ROS_INFO("PID %d exited with status %d", pid, WEXITSTATUS(status));
+						ROS_INFO_STREAM("PID " << pid << " exited with status " << WEXITSTATUS(status) << ".");
 
 						pid_it = m_pids.erase(pid_it);
 
@@ -121,7 +121,7 @@ private:
 						}
 					} 
 					else if (WIFSIGNALED(status)) {
-						ROS_INFO("PID %d killed with signal %d", pid, WTERMSIG(status));
+						ROS_INFO_STREAM("PID " << pid << " killed with signal " << WTERMSIG(status) << ".");
 
 						pid_it = m_pids.erase(pid_it);
 
@@ -130,10 +130,10 @@ private:
 						}
 					} 
 					else if (WIFSTOPPED(status)) {
-						ROS_INFO("PID %d stopped with signal %d", pid, WSTOPSIG(status));
+						ROS_INFO_STREAM("PID " << pid << " stopped with signal " << WSTOPSIG(status) << ".");
 					} 
 					else if (WIFCONTINUED(status)) {
-						ROS_INFO("PID %d continued"   , pid);
+						ROS_INFO_STREAM("PID " << pid << " continued.");
 					}
 				}
 			}

@@ -31,11 +31,11 @@ bool UVCLightNode::onSetUVCLight(uvc_light::set_uvc_light::Request &request, uvc
 
 int main(int argc, char **argv)
 {
+    ros::init(argc, argv, "uvc_light");
+
+    ros::NodeHandle node_handle("~");
+    
     try {
-        ros::init(argc, argv, "uvc_light");
-
-        ros::NodeHandle node_handle("~");
-
         UVCLightNode uvc_light_node(node_handle);
         
         while (ros::ok()) {
@@ -45,7 +45,7 @@ int main(int argc, char **argv)
         return 0;
     }
     catch (std::exception const &exception) {
-        ROS_ERROR("%s", exception.what());
+        ROS_ERROR_STREAM(exception.what());
 
         return 1;
     }

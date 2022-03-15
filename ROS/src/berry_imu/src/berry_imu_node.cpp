@@ -112,11 +112,11 @@ void BerryIMUNode::publish()
 
 int main(int argc, char **argv)
 {
+    ros::init(argc, argv, "berry_imu");
+
+    ros::NodeHandle node_handle("~");
+
     try {
-        ros::init(argc, argv, "berry_imu");
-
-        ros::NodeHandle node_handle("~");
-
         BerryIMUNode berry_imu_node(node_handle);
         
         while (ros::ok()) {
@@ -128,7 +128,7 @@ int main(int argc, char **argv)
         return 0;
     }
     catch (std::exception const &exception) {
-        ROS_ERROR("%s", exception.what());
+        ROS_ERROR_STREAM(exception.what());
 
         return 1;
     }

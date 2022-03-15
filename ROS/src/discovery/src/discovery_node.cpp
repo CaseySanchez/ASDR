@@ -85,11 +85,11 @@ bool DiscoveryNode::onDiscover(discovery::discover::Request &request, discovery:
 
 int main(int argc, char **argv)
 {
+    ros::init(argc, argv, "discovery");
+
+    ros::NodeHandle node_handle("~");
+    
     try {
-        ros::init(argc, argv, "discovery_node");
-
-        ros::NodeHandle node_handle("~");
-
         DiscoveryNode discovery_node(node_handle);
         
         while (ros::ok()) {
@@ -99,7 +99,7 @@ int main(int argc, char **argv)
         return 0;
     }
     catch (std::exception const &exception) {
-        ROS_ERROR("%s", exception.what());
+        ROS_ERROR_STREAM(exception.what());
 
         return 1;
     }

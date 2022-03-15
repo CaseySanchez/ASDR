@@ -37,7 +37,7 @@ bool CoveragePathPlannerNode::onMakePlan(coverage_path_planner::make_plan::Reque
                 uint32_t const x = index % occupancy_grid.info.width;
                 uint32_t const y = index / occupancy_grid.info.width;
 
-                Eigen::Vector3d const position(static_cast<float>(x) * occupancy_grid.info.resolution, static_cast<float>(y) * occupancy_grid.info.resolution, 0.0);
+                Eigen::Vector3d const position(static_cast<double>(x) * occupancy_grid.info.resolution, static_cast<double>(y) * occupancy_grid.info.resolution, 0.0);
 
                 Eigen::Vector3d const origin_position(occupancy_grid.info.origin.position.x, occupancy_grid.info.origin.position.y, occupancy_grid.info.origin.position.z);
                 Eigen::Quaterniond const origin_orientation(occupancy_grid.info.origin.orientation.w, occupancy_grid.info.origin.orientation.x, occupancy_grid.info.origin.orientation.y, occupancy_grid.info.origin.orientation.z);
@@ -73,17 +73,34 @@ bool CoveragePathPlannerNode::onMakePlan(coverage_path_planner::make_plan::Reque
         slice.setSpacing(m_slice_spacing);
         slice.compute(*point_cloud_sliced);
 
-        for (size_t index = 0; index < std::size(point_cloud_sliced->points); ++index) {
+        for (size_t index = 0; index < std::size(point_cloud_sliced->points) - 1; ++index) {
             geometry_msgs::Pose pose;
 
             pose.position.x = point_cloud_sliced->points[index].x;
             pose.position.y = point_cloud_sliced->points[index].y;
-            pose.position.z = 0.0f;
+            pose.position.z = 0.0;
 
-            pose.orientation.x = 0.0f;
-            pose.orientation.y = 0.0f;
-            pose.orientation.z = 0.0f;
-            pose.orientation.w = 1.0f;
+            Eigen::Quaterniond const orientation = Eigen::AngleAxisd(0.0, Eigen::Vector3d::UnitX()) * Eigen::AngleAxisd(0.0, Eigen::Vector3d::UnitY()) * Eigen::AngleAxisd(std::atan2(point_cloud_sliced->points[index + 1].y - point_cloud_sliced->points[index].y, point_cloud_sliced->points[index + 1].x - point_cloud_sliced->points[index].x), Eigen::Vector3d::UnitZ());
+
+            pose.orientation.x = orientation.x();
+            pose.orientation.y = orientation.y();
+            pose.orientation.z = orientation.z();
+            pose.orientation.w = orientation.w();
+
+            response.plan.push_back(pose);
+        }
+
+        {
+            geometry_msgs::Pose pose;
+
+            pose.position.x = point_cloud_sliced->points.back().x;
+            pose.position.y = point_cloud_sliced->points.back().y;
+            pose.position.z = 0.0;
+
+            pose.orientation.x = 0.0;
+            pose.orientation.y = 0.0;
+            pose.orientation.z = 0.0;
+            pose.orientation.w = 1.0;
 
             response.plan.push_back(pose);
         }
@@ -96,11 +113,11 @@ bool CoveragePathPlannerNode::onMakePlan(coverage_path_planner::make_plan::Reque
 
 int main(int argc, char **argv)
 {
+    ros::init(argc, argv, "coverage_path_planner");
+
+    ros::NodeHandle node_handle("~");
+    
     try {
-        ros::init(argc, argv, "coverage_path_planner_node");
-
-        ros::NodeHandle node_handle("~");
-
         CoveragePathPlannerNode coverage_path_planner_node(node_handle);
         
         while (ros::ok()) {
@@ -110,7 +127,7 @@ int main(int argc, char **argv)
         return 0;
     }
     catch (std::exception const &exception) {
-        ROS_ERROR("%s", exception.what());
+        ROS_ERROR_STREAM(exception.what());
 
         return 1;
     }

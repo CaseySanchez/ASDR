@@ -138,11 +138,11 @@ void MobileBaseNode::write(ros::Duration const &period)
 
 int main(int argc, char **argv)
 {
+    ros::init(argc, argv, "mobile_base");
+
+    ros::NodeHandle node_handle("~");
+    
     try {
-        ros::init(argc, argv, "mobile_base");
-
-        ros::NodeHandle node_handle("~");
-
         MobileBaseNode mobile_base_node(node_handle);
 
         controller_manager::ControllerManager controller_manager(&mobile_base_node, node_handle);
@@ -168,7 +168,7 @@ int main(int argc, char **argv)
         return 0;
     }
     catch (std::exception const &exception) {
-        ROS_ERROR("%s", exception.what());
+        ROS_ERROR_STREAM(exception.what());
 
         return 1;
     }

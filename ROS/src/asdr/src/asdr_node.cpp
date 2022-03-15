@@ -1,24 +1,23 @@
 #include "asdr_node.hpp"
 
 ASDRNode::ASDRNode(ros::NodeHandle const &node_handle) : 
-    m_node_handle { node_handle }, 
-    m_context { node_handle }, 
-    m_finite_state_machine { m_context }
+    m_node_handle { node_handle },
+    m_finite_state_machine { { node_handle } }
 {
-    if (!m_node_handle.getParam("max_linear_velocity", m_max_linear_velocity)) {
-        throw std::runtime_error("max_linear_velocity not provided.");
+    if (!m_node_handle.getParam("/asdr/mobile_base_controller/linear/x/max_velocity", m_max_linear_velocity)) {
+        throw std::runtime_error("/asdr/mobile_base_controller/linear/x/max_velocity not provided.");
     }
     
-    if (!m_node_handle.getParam("min_linear_velocity", m_min_linear_velocity)) {
-        throw std::runtime_error("min_linear_velocity not provided.");
+    if (!m_node_handle.getParam("/asdr/mobile_base_controller/linear/x/min_velocity", m_min_linear_velocity)) {
+        throw std::runtime_error("/asdr/mobile_base_controller/linear/x/min_velocity not provided.");
     }
 
-    if (!m_node_handle.getParam("max_angular_velocity", m_max_angular_velocity)) {
-        throw std::runtime_error("max_angular_velocity not provided.");
+    if (!m_node_handle.getParam("/asdr/mobile_base_controller/angular/z/max_velocity", m_max_angular_velocity)) {
+        throw std::runtime_error("/asdr/mobile_base_controller/angular/z/max_velocity not provided.");
     }
     
-    if (!m_node_handle.getParam("min_angular_velocity", m_min_angular_velocity)) {
-        throw std::runtime_error("min_angular_velocity not provided.");
+    if (!m_node_handle.getParam("/asdr/mobile_base_controller/angular/z/min_velocity", m_min_angular_velocity)) {
+        throw std::runtime_error("/asdr/mobile_base_controller/angular/z/min_velocity not provided.");
     }
 
     m_get_state_server = m_node_handle.advertiseService(ros::names::resolve("get_state"), &ASDRNode::onGetState, this);
@@ -69,9 +68,16 @@ bool ASDRNode::onGetState(asdr::get_state::Request &request, asdr::get_state::Re
             }
         }
         else if (m_finite_state_machine.isActive<Disinfect>()) {
-            response.state = "Automatic::Disinfect";
+            if (m_finite_state_machine.isActive<Navigate>()) {
+                response.state = "Automatic::Disinfect::Navigate";
 
-            return true;
+                return true;
+            }
+            else {
+                response.state = "Automatic::Disinfect";
+
+                return true;
+            }
         }
         else {
             response.state = "Automatic"; 
@@ -127,11 +133,11 @@ bool ASDRNode::onSetVelocity(asdr::set_velocity::Request &request, asdr::set_vel
 
 int main(int argc, char **argv)
 {
+    ros::init(argc, argv, "asdr");
+
+    ros::NodeHandle node_handle("~");
+
     try {
-        ros::init(argc, argv, "asdr");
-
-        ros::NodeHandle node_handle("~");
-
         ASDRNode asdr_node(node_handle);
         
         while (ros::ok()) {
@@ -143,7 +149,7 @@ int main(int argc, char **argv)
         return 0;
     }
     catch (std::exception const &exception) {
-        ROS_ERROR("%s", exception.what());
+        ROS_ERROR_STREAM(exception.what());
 
         return 1;
     }
