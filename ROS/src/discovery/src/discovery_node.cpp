@@ -48,28 +48,26 @@ bool DiscoveryNode::onDiscover(discovery::discover::Request &request, discovery:
         if (goal.has_value()) {
             auto const &[goal_x, goal_y] = goal.value();
 
-            Eigen::Vector3d const position(static_cast<float>(goal_x) * occupancy_grid.info.resolution, static_cast<float>(goal_y) * occupancy_grid.info.resolution, 0.0);
+            Eigen::Vector3d const goal_position(static_cast<float>(goal_x) * occupancy_grid.info.resolution, static_cast<float>(goal_y) * occupancy_grid.info.resolution, 0.0);
 
             Eigen::Vector3d const origin_position(occupancy_grid.info.origin.position.x, occupancy_grid.info.origin.position.y, occupancy_grid.info.origin.position.z);
             Eigen::Quaterniond const origin_orientation(occupancy_grid.info.origin.orientation.w, occupancy_grid.info.origin.orientation.x, occupancy_grid.info.origin.orientation.y, occupancy_grid.info.origin.orientation.z);
 
-            Eigen::Vector3d const point = origin_orientation * position + origin_position;
+            Eigen::Vector3d const pose_position = origin_orientation * goal_position + origin_position;
+            Eigen::Quaterniond const pose_orientation = origin_orientation * Eigen::AngleAxisd(std::atan2(goal_position.y() - transform_position.y(), goal_position.x() - transform_position.x()), Eigen::Vector3d::UnitZ());
 
-            geometry_msgs::PoseStamped pose_stamped;
+            geometry_msgs::Pose pose;
 
-            pose_stamped.header.stamp = ros::Time::now();
-            pose_stamped.header.frame_id = "map";
+            pose.position.x = pose_position.x();
+            pose.position.y = pose_position.y();
+            pose.position.z = pose_position.z();
 
-            pose_stamped.pose.position.x = point.x();
-            pose_stamped.pose.position.y = point.y();
-            pose_stamped.pose.position.z = point.z();
+            pose.orientation.x = pose_orientation.x();
+            pose.orientation.y = pose_orientation.y();
+            pose.orientation.z = pose_orientation.z();
+            pose.orientation.w = pose_orientation.w();
 
-            pose_stamped.pose.orientation.x = 0.0f;
-            pose_stamped.pose.orientation.y = 0.0f;
-            pose_stamped.pose.orientation.z = 0.0f;
-            pose_stamped.pose.orientation.w = 1.0f;
-
-            response.pose_stamped = pose_stamped;
+            response.pose = pose;
 
             response.status = discovery::discover::Response::SUCCESS;
         }

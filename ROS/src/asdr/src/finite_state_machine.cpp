@@ -169,8 +169,11 @@ void Explore::entryGuard(GuardControl &control) noexcept
             else if (discover_srv.response.status == discovery::discover::Response::SUCCESS) {
                 move_base_msgs::MoveBaseGoal goal;
 
-                goal.target_pose = discover_srv.response.pose_stamped;
+                goal.target_pose.header.frame_id = "base_link";
+                goal.target_pose.header.stamp = ros::Time::now();
 
+                goal.target_pose.pose = discover_srv.response.pose;
+                
                 control.context().m_move_base_client->sendGoal(goal);
             }
         }
