@@ -9,7 +9,7 @@ void SerialCommandClient::open(std::string const &path_name)
 {
     close();
 
-    m_serial = std::unique_ptr<serial::Serial>(new serial::Serial(path_name, 9600, serial::Timeout::simpleTimeout(1000)));   
+    m_serial = std::unique_ptr<serial::Serial>(new serial::Serial(path_name, 115200, serial::Timeout::simpleTimeout(1000)));   
 }
 
 void SerialCommandClient::close()

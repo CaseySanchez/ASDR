@@ -32,19 +32,15 @@ bool CoveragePathPlannerNode::onMakePlan(coverage_path_planner::make_plan::Reque
         pcl::PointCloud<pcl::PointXYZ>::Ptr point_cloud_extruded(new pcl::PointCloud<pcl::PointXYZ>);
         pcl::PointCloud<pcl::PointXYZ>::Ptr point_cloud_sliced(new pcl::PointCloud<pcl::PointXYZ>);
 
+        Eigen::Vector3d const origin_position(occupancy_grid.info.origin.position.x, occupancy_grid.info.origin.position.y, occupancy_grid.info.origin.position.z);
+        Eigen::Quaterniond const origin_orientation(occupancy_grid.info.origin.orientation.w, occupancy_grid.info.origin.orientation.x, occupancy_grid.info.origin.orientation.y, occupancy_grid.info.origin.orientation.z);
+
         for (uint32_t index = 0; index < occupancy_grid.info.height * occupancy_grid.info.width; ++index) {
             if (occupancy_grid.data[index] == 0) {
                 uint32_t const x = index % occupancy_grid.info.width;
                 uint32_t const y = index / occupancy_grid.info.width;
-
-                Eigen::Vector3d const position(static_cast<double>(x) * occupancy_grid.info.resolution, static_cast<double>(y) * occupancy_grid.info.resolution, 0.0);
-
-                Eigen::Vector3d const origin_position(occupancy_grid.info.origin.position.x, occupancy_grid.info.origin.position.y, occupancy_grid.info.origin.position.z);
-                Eigen::Quaterniond const origin_orientation(occupancy_grid.info.origin.orientation.w, occupancy_grid.info.origin.orientation.x, occupancy_grid.info.origin.orientation.y, occupancy_grid.info.origin.orientation.z);
-
-                Eigen::Vector3d const point = origin_orientation * position + origin_position;
                 
-                point_cloud->points.emplace_back(point.x(), point.y(), point.z());
+                point_cloud->points.emplace_back(static_cast<float>(x) * occupancy_grid.info.resolution, static_cast<float>(y) * occupancy_grid.info.resolution, 0.0);
             }
         }
         
@@ -73,34 +69,38 @@ bool CoveragePathPlannerNode::onMakePlan(coverage_path_planner::make_plan::Reque
         slice.setSpacing(m_slice_spacing);
         slice.compute(*point_cloud_sliced);
 
-        for (size_t index = 0; index < std::size(point_cloud_sliced->points) - 1; ++index) {
-            geometry_msgs::Pose pose;
-
-            pose.position.x = point_cloud_sliced->points[index].x;
-            pose.position.y = point_cloud_sliced->points[index].y;
-            pose.position.z = 0.0;
-
-            Eigen::Quaterniond const orientation = Eigen::AngleAxisd(0.0, Eigen::Vector3d::UnitX()) * Eigen::AngleAxisd(0.0, Eigen::Vector3d::UnitY()) * Eigen::AngleAxisd(std::atan2(point_cloud_sliced->points[index + 1].y - point_cloud_sliced->points[index].y, point_cloud_sliced->points[index + 1].x - point_cloud_sliced->points[index].x), Eigen::Vector3d::UnitZ());
-
-            pose.orientation.x = orientation.x();
-            pose.orientation.y = orientation.y();
-            pose.orientation.z = orientation.z();
-            pose.orientation.w = orientation.w();
-
-            response.plan.push_back(pose);
-        }
-
         {
             geometry_msgs::Pose pose;
 
-            pose.position.x = point_cloud_sliced->points.back().x;
-            pose.position.y = point_cloud_sliced->points.back().y;
-            pose.position.z = 0.0;
+            Eigen::Vector3d const position = origin_orientation * Eigen::Vector3d(point_cloud_sliced->points[0].x, point_cloud_sliced->points[0].y, point_cloud_sliced->points[0].z) + origin_position;
+
+            pose.position.x = position.x();
+            pose.position.y = position.y();
+            pose.position.z = position.z();
 
             pose.orientation.x = 0.0;
             pose.orientation.y = 0.0;
             pose.orientation.z = 0.0;
             pose.orientation.w = 1.0;
+
+            response.plan.push_back(pose);
+        }
+
+        for (size_t index = 1; index < std::size(point_cloud_sliced->points); ++index) {
+            geometry_msgs::Pose pose;
+
+            Eigen::Vector3d const position = origin_orientation * Eigen::Vector3d(point_cloud_sliced->points[index].x, point_cloud_sliced->points[index].y, point_cloud_sliced->points[index].z) + origin_position;
+
+            pose.position.x = position.x();
+            pose.position.y = position.y();
+            pose.position.z = position.z();
+
+            Eigen::Quaterniond const orientation = origin_orientation * Eigen::AngleAxisd(std::atan2(point_cloud_sliced->points[index].y - point_cloud_sliced->points[index - 1].y, point_cloud_sliced->points[index].x - point_cloud_sliced->points[index - 1].x), Eigen::Vector3d::UnitZ());
+
+            pose.orientation.x = orientation.x();
+            pose.orientation.y = orientation.y();
+            pose.orientation.z = orientation.z();
+            pose.orientation.w = orientation.w();
 
             response.plan.push_back(pose);
         }

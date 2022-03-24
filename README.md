@@ -7,14 +7,14 @@ https://github.com/wjwwood/serial
 https://github.com/andrew-gresyk/HFSM2
 ```
 
-## Build ADR
+## Build ASDR
 ```
 cd ROS
 catkin_make
 source devel/setup.sh
 ```
 
-## Launch ADR
+## Launch ASDR
 ```
-roslaunch launch/adr.launch
+roslaunch launch/asdr.launch
 ```
