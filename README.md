@@ -1,5 +1,7 @@
 # Autonomous Surface Disinfection Robot 
 
+![ASDR](Documents/ASDR.png)
+
 ## Dependencies
 ```
 https://github.com/microsoft/cpprestsdk
